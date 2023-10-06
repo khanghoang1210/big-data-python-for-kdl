@@ -26,3 +26,5 @@ def crawl_box_office():
 
     id = extract_id(url_detail)
 
+"adadsadsasd"
+
