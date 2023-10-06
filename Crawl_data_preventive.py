@@ -2,22 +2,15 @@ import requests
 import json
 from bs4 import BeautifulSoup
 
-def get_id(id_url):
-    res = requests.get(id_url)
-    spagetti = BeautifulSoup(res.content, 'html.parser')
-    raw_href = spagetti.find_all('main')
-    for href in raw_href:
-        id = href.find('a', {'class':'a-link-normal'}).get('href')
-        id = id.split('/')
-        return id[4]
-def get_id_IMDB(url):
+def id_detection(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    datas = soup.find_all('tr')
-    for data in datas[1: ]:
-        id_url = 'https://www.boxofficemojo.com/' + data.find('a', {'class':'a-link-normal'}).get('href')
-        id_imdb = get_id(id_url)
-        return id_imdb
+    rows = soup.find_all('main')
+    # Get id of movie
+    for row in rows:
+        id = row.find('a', {'class':'a-link-normal'}).get('href')
+        id = id.split('/')
+        return id[4]
 
 def boxOfficeMojo(url):
     # Request to website and download HTML contents
@@ -27,6 +20,8 @@ def boxOfficeMojo(url):
     rows = soup.find_all('tr')
 
     for row in rows[1:]:
+        id_url = 'https://www.boxofficemojo.com/' + row.find('a', {'class':'a-link-normal'}).get('href')
+        id = id_detection(id_url)
         # Find necessary data
         rank = row.find('td',{'class':'mojo-header-column'}).text
         nameMovie = row.find('td',{'class':'mojo-field-type-release'}).text
@@ -40,4 +35,3 @@ def boxOfficeMojo(url):
 
 url = "https://www.boxofficemojo.com/date/2023-09-02/"
 boxOfficeMojo(url)
-get_id_IMDB(url)
