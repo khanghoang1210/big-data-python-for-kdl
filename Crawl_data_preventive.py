@@ -24,12 +24,10 @@ def boxOfficeMojo(url):
         id = id_detection(id_url)
         # Find necessary data
         rank = row.find('td',{'class':'mojo-header-column'}).text
-        nameMovie = row.find('td',{'class':'mojo-field-type-release'}).text
         revenue = row.find('td',{'class':'mojo-field-type-money'}).text
         gross_change_by_date = row.find('td',{'class':'mojo-field-type-percent_delta'}).text
-        studio = row.find('td',{'class':'mojo-field-type-release_studios'}).text.replace('\n',"")
         
-        data = {"Rank": rank,"Name": nameMovie,"Revenue": revenue,"Gross Change": gross_change_by_date, "Studio": studio}
+        data = {"Rank": rank,"Revenue": revenue,"Gross Change": gross_change_by_date}
         final_data = json.dumps(data, indent=4)
         return final_data
 
