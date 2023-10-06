@@ -10,13 +10,6 @@ def get_id(id_url):
         id = href.find('a', {'class':'a-link-normal'}).get('href')
         id = id.split('/')
         return id[4]
-# def get_id_IMDB(url):
-#     response = requests.get(url)
-#     soup = BeautifulSoup(response.content, 'html.parser')
-#     datas = soup.find_all('tr')
-#     for data in datas[1: ]:
-      
-#         return id_imdb
 
 def boxOfficeMojo(url):
     # Request to website and download HTML contents
@@ -30,14 +23,12 @@ def boxOfficeMojo(url):
         final_data = {}
         # Find necessary data
         rank = row.find('td',{'class':'mojo-header-column'}).text
-        nameMovie = row.find('td',{'class':'mojo-field-type-release'}).text
         revenue = row.find('td',{'class':'mojo-field-type-money'}).text
         gross_change_by_date = row.find('td',{'class':'mojo-field-type-percent_delta'}).text
-        studio = row.find('td',{'class':'mojo-field-type-release_studios'}).text.replace('\n',"")
+        # Get IMDB url
         url_detail = 'https://www.boxofficemojo.com/' + row.find('a', {'class':'a-link-normal'}).get('href')
         id_imdb = get_id(url_detail)
-        # data = {"id":id_imdb, "Rank": rank,"Name": nameMovie,"Revenue": revenue,"Gross Change": gross_change_by_date, "Studio": studio}
-        # final_data = json.dumps(data, indent=4)
+
         final_data['id'] = id_imdb
         final_data['rank'] = rank
         final_data['revenue'] = revenue
@@ -47,4 +38,4 @@ def boxOfficeMojo(url):
 
 url = "https://www.boxofficemojo.com/date/2023-09-02/"
 boxOfficeMojo(url)
-#get_id_IMDB(url)
+
