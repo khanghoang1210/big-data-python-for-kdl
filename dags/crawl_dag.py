@@ -1,5 +1,6 @@
 # Import libraries
 from airflow.operators.python import PythonOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from datetime import datetime, timedelta, date
 from airflow import DAG
 from crawl_data import boxOfficeMojo
@@ -30,3 +31,19 @@ with DAG (
         provide_context = True,
         do_xcom_push=True
     )
+
+     # Create fact table task
+    create_fact_table = PostgresOperator(
+        task_id='create_fact_table',
+        postgres_conn_id='postgres_localhost',
+        sql="""
+            CREATE TABLE IF NOT EXISTS movie_revenue (
+            rank integer,
+            revenue text,
+            crawled_date date,
+            id text,
+            primary key(crawled_date, id)
+        )
+        """
+    )
+crawl_fact_data >> create_fact_table
