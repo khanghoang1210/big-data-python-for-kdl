@@ -38,4 +38,3 @@ def boxOfficeMojo(url):
 
 url = "https://www.boxofficemojo.com/date/2023-09-02/"
 boxOfficeMojo(url)
-
