@@ -40,6 +40,7 @@ def get_budget(faq_web):
         return budget
         # print(budget)
 
+
 def boxOfficeMojo(date):
     url = f"https://www.boxofficemojo.com/date/{date}/"
 
