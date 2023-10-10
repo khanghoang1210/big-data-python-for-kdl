@@ -4,7 +4,7 @@ spark = SparkSession.builder \
     .master('local')\
     .appName("Snowflake Data Lake Writer") \
     .config("spark.jars",
-             "./spark/lib/postgresql-42.6.0.jar, ./spark/lib/spark-snowflake_2.12-2.9.0-spark_3.1.jar")\
+             "./spark/lib/postgresql-42.6.0.jar, ./spark/lib/spark-snowflake_2.12-2.12.0-spark_3.4.jar")\
     .getOrCreate()
 
 
@@ -20,11 +20,11 @@ jdbcDF = spark.read \
 jdbcDF.show()
 
 sfOptions = {
-    "sfURL": "ytymwtq-bu51995.snowflakecomputing.com",
-    "sfAccount": "BU51995",
+    "sfURL": "https://ytymwtq-bu51995.snowflakecomputing.com",
+    "sfAccount": "bu51995",
     "sfUser": "khanghoang12",
     "sfPassword": "Khang12102003@",
-    "sfAuthenticator": "oauth",
+  #  "sfAuthenticator": "oauth",
     "sfDatabase": "DATA_LAKE",
     "sfSchema": "PUBLIC",
     "sfWarehouse": "COMPUTE_WH",
@@ -39,3 +39,9 @@ jdbcDF.write\
     .option("dbtable", "TEST")\
     .mode('append')\
     .save()
+
+# df = spark.read.format(SNOWFLAKE_SOURCE_NAME)\
+#                 .options(**sfOptions)\
+#                 .option('query', "select * from data_lake.public.test")\
+#                 .load()
+# df.show()
