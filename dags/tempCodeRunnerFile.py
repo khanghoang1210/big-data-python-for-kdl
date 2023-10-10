@@ -1,3 +1,3 @@
-for div in html_file:
-    #     budget = div.text       
-    #     print(budget)
+if __name__ =='__main__':
+#     #url = "https://www.boxofficemojo.com/date/2023-09-02/"
+#     boxOfficeMojo('2023-09-02')

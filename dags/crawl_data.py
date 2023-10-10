@@ -17,12 +17,13 @@ def IMDB(imdb_url):
     header = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'}
     response = requests.get(imdb_url,headers=header)
     soup = BeautifulSoup(response.content, 'html.parser')
-    id = imdb_url.split('/')
     html_file = soup.find_all('div',{'class':'ipc-html-content-inner-div'})
     # print(html_file)
     data = list(html_file)
+    id = imdb_url.split('/')
     
     # Get neccessary data
+    id_imdb = id[4]
     hour = data[0].text
     rating = float(data[2].text.replace(" out of 10",""))
     director = data[5].text
@@ -31,6 +32,7 @@ def IMDB(imdb_url):
     genre = (data[16].text).replace(" and","")
     
     final_data = {}
+    final_data['id'] = id_imdb
     final_data['hour'] = hour
     final_data['rating'] = rating
     final_data['director'] = director
@@ -38,8 +40,8 @@ def IMDB(imdb_url):
     final_data['worldwide'] = worldwide
     final_data['genre'] = genre
     IMDB_data.append(final_data)
-    # print(IMDB_data)
-    return IMDB_data
+    print(IMDB_data)
+    # return IMDB_data
     
 def boxOfficeMojo(date):
     url = f"https://www.boxofficemojo.com/date/{date}"
@@ -69,9 +71,9 @@ def boxOfficeMojo(date):
         box_office_daily.append(final_data)
     return box_office_daily
 
-if __name__ =='__main__':
-    #url = "https://www.boxofficemojo.com/date/2023-09-02/"
-    boxOfficeMojo('2023-09-02')
+# if __name__ =='__main__':
+#     #url = "https://www.boxofficemojo.com/date/2023-09-02/"
+#     boxOfficeMojo('2023-09-02')
 
 imdb_url = f"https://www.imdb.com/title/tt17024450/faq/"
 IMDB(imdb_url)
