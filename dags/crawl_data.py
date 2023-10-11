@@ -11,37 +11,6 @@ def get_id_boxoffice(id_url):
         id = id.split('/')
         return id[4]
 
-
-def IMDB(imdb_url):
-    IMDB_data = [] 
-    header = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'}
-    response = requests.get(imdb_url,headers=header)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    html_file = soup.find_all('div',{'class':'ipc-html-content-inner-div'})
-    # print(html_file)
-    data = list(html_file)
-    id = imdb_url.split('/')
-    
-    # Get neccessary data
-    id_imdb = id[4]
-    hour = data[0].text
-    rating = float(data[2].text.replace(" out of 10",""))
-    director = data[5].text
-    budget = data[12].text
-    worldwide = data[13].text
-    genre = (data[16].text).replace(" and","")
-    
-    final_data = {}
-    final_data['id'] = id_imdb
-    final_data['hour'] = hour
-    final_data['rating'] = rating
-    final_data['director'] = director
-    final_data['budget'] = budget
-    final_data['worldwide'] = worldwide
-    final_data['genre'] = genre
-    IMDB_data.append(final_data)
-    print(IMDB_data)
-    # return IMDB_data
     
 def boxOfficeMojo(date):
     url = f"https://www.boxofficemojo.com/date/{date}"
@@ -71,9 +40,44 @@ def boxOfficeMojo(date):
         box_office_daily.append(final_data)
     return box_office_daily
 
+
+
+def crawl_imdb_data(**items):
+    imdb_data = [] 
+    context = items['ti'].xcom_pull(task_ids='crawl_fact_data')
+    for item in context:
+        id = item['id']
+        url = f"https://www.imdb.com/title/{id}/faq/"
+
+        header = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'}
+        response = requests.get(url,headers=header)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        div = soup.find_all('div',{'class':'ipc-html-content-inner-div'})
+        data = list(div)
+        
+        # # Get neccessary data
+        movie_duration = data[0].text
+        rating = float(data[2].text.replace(" out of 10",""))
+        director = data[5].text
+        budget = data[12].text
+        worldwide = data[13].text
+        genre = (data[16].text).replace(" and","")
+        
+        final_data = {}
+        final_data['id'] = id
+        final_data['movie_duration'] = movie_duration
+        final_data['rating'] = rating
+        final_data['director'] = director
+        final_data['budget'] = budget
+        final_data['worldwide'] = worldwide
+        final_data['genre'] = genre
+        imdb_data.append(final_data)
+   # print(imdb_data)
+    return imdb_data
+
 # if __name__ =='__main__':
 #     #url = "https://www.boxofficemojo.com/date/2023-09-02/"
 #     boxOfficeMojo('2023-09-02')
 
-imdb_url = f"https://www.imdb.com/title/tt17024450/faq/"
-IMDB(imdb_url)
+# imdb_url = f"https://www.imdb.com/title/tt17024450/faq/"
+# crawl_imdb_data(imdb_url)
