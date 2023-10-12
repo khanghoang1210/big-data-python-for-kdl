@@ -3,7 +3,7 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from datetime import datetime, timedelta, date
 from airflow import DAG
-from crawl_data import boxOfficeMojo
+from crawl_data import boxOfficeMojo, crawl_imdb_data
 
 
 default_args = {
@@ -32,6 +32,13 @@ with DAG (
         do_xcom_push=True
     )
 
+    crawl_dim_data = PythonOperator(
+        task_id = 'crawl_dim_data',
+        python_callable=crawl_imdb_data,
+        provide_context = True,
+        do_xcom_push=True
+    )
+
      # Create fact table task
     create_fact_table = PostgresOperator(
         task_id='create_fact_table',
@@ -46,4 +53,4 @@ with DAG (
         )
         """
     )
-crawl_fact_data >> create_fact_table
+crawl_fact_data >> crawl_dim_data

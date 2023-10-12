@@ -2,22 +2,16 @@ import requests
 import json
 from bs4 import BeautifulSoup
 
-def get_id(id_url):
+def get_id_boxoffice(id_url):
     res = requests.get(id_url)
-    spagetti = BeautifulSoup(res.content, 'html.parser')
-    raw_href = spagetti.find_all('main')
+    soup = BeautifulSoup(res.content, 'html.parser')
+    raw_href = soup.find_all('main')
     for href in raw_href:
         id = href.find('a', {'class':'a-link-normal'}).get('href')
         id = id.split('/')
         return id[4]
-# def get_id_IMDB(url):
-#     response = requests.get(url)
-#     soup = BeautifulSoup(response.content, 'html.parser')
-#     datas = soup.find_all('tr')
-#     for data in datas[1: ]:
-      
-#         return id_imdb
 
+    
 def boxOfficeMojo(date):
     url = f"https://www.boxofficemojo.com/date/{date}"
 
@@ -33,13 +27,11 @@ def boxOfficeMojo(date):
         final_data = {}
         # Find necessary data
         rank = row.find('td',{'class':'mojo-header-column'}).text
-        #nameMovie = row.find('td',{'class':'mojo-field-type-release'}).text
         revenue = row.find('td',{'class':'mojo-field-type-money'}).text
         gross_change_by_date = row.find('td',{'class':'mojo-field-type-percent_delta'}).text
-        #studio = row.find('td',{'class':'mojo-field-type-release_studios'}).text.replace('\n',"")
         url_detail = 'https://www.boxofficemojo.com/' + row.find('a',
                                          {'class':'a-link-normal'}).get('href')
-        id_imdb = get_id(url_detail)
+        id_imdb = get_id_boxoffice(url_detail)
 
         final_data['id'] = id_imdb
         final_data['rank'] = rank
@@ -48,6 +40,44 @@ def boxOfficeMojo(date):
         box_office_daily.append(final_data)
     return box_office_daily
 
-if __name__ =='__main__':
-    #url = "https://www.boxofficemojo.com/date/2023-09-02/"
-    boxOfficeMojo('2023-09-02')
+
+
+def crawl_imdb_data(**items):
+    imdb_data = [] 
+    context = items['ti'].xcom_pull(task_ids='crawl_fact_data')
+    for item in context:
+        id = item['id']
+        url = f"https://www.imdb.com/title/{id}/faq/"
+
+        header = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'}
+        response = requests.get(url,headers=header)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        div = soup.find_all('div',{'class':'ipc-html-content-inner-div'})
+        data = list(div)
+        
+        # # Get neccessary data
+        movie_duration = data[0].text
+        rating = float(data[2].text.replace(" out of 10",""))
+        director = data[5].text
+        budget = data[12].text
+        worldwide = data[13].text
+        genre = (data[16].text).replace(" and","")
+        
+        final_data = {}
+        final_data['id'] = id
+        final_data['movie_duration'] = movie_duration
+        final_data['rating'] = rating
+        final_data['director'] = director
+        final_data['budget'] = budget
+        final_data['worldwide'] = worldwide
+        final_data['genre'] = genre
+        imdb_data.append(final_data)
+   # print(imdb_data)
+    return imdb_data
+
+# if __name__ =='__main__':
+#     #url = "https://www.boxofficemojo.com/date/2023-09-02/"
+#     boxOfficeMojo('2023-09-02')
+
+# imdb_url = f"https://www.imdb.com/title/tt17024450/faq/"
+# crawl_imdb_data(imdb_url)
