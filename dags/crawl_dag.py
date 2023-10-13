@@ -1,9 +1,62 @@
 # Import libraries
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from datetime import datetime, timedelta, date
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from datetime import datetime, timedelta
+import json
 from airflow import DAG
-from crawl_data import boxOfficeMojo, crawl_imdb_data
+from crawl_data import crawl_box_office_data, crawl_imdb_data
+
+
+# Insert fact data to PostgreSQL
+def read_and_insert_fact_data(**kwargs):
+    ti = kwargs['ti']
+
+    crawled_data = ti.xcom_pull(task_ids='crawl_fact_data')
+    data = f"""{crawled_data}"""
+    data_clean = data.replace("'", '"')
+    json_fact_data = json.loads(data_clean)
+
+    pg_hook = PostgresHook(postgres_conn_id='postgres_localhost')
+
+    for item in json_fact_data:
+        sql = """
+        INSERT INTO movie_revenue (id, rank, revenue, gross_change, crawled_date)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        pg_hook.run(sql, parameters=(
+            item['id'],
+            item['rank'],
+            item['revenue'],
+            item['gross_change'],
+            item['crawled_date']))
+
+
+# Insert dim data to PostgreSQL
+def read_and_insert_dim_data(**kwargs):
+    ti = kwargs['ti']
+    crawled_data = ti.xcom_pull(task_ids='crawl_dim_data')
+    
+    data = f"""{crawled_data}"""
+    data_clean = data.replace("'", '"')
+    json_dim_data = json.loads(data_clean)
+
+    pg_hook = PostgresHook(postgres_conn_id='postgres_localhost')
+    
+    for item in json_dim_data:
+        sql = """
+            insert into movies (movie_id, title, director, rating, crawled_date)
+            values (%s, %s, %s, %s, %s)
+            ON CONFLICT (movie_id) 
+            DO UPDATE
+            SET crawled_date = EXCLUDED.crawled_date
+            """
+        pg_hook.run(sql, parameters=(
+            item['title'],
+            item['movie_id'],
+            item['director'],
+            item['rating'], 
+            item['crawled_date']))
 
 
 default_args = {
@@ -26,7 +79,7 @@ with DAG (
     # Crawl fact data task
     crawl_fact_data = PythonOperator(
         task_id = 'crawl_fact_data',
-        python_callable=boxOfficeMojo,
+        python_callable=crawl_box_office_data,
         op_kwargs={'date': '{{ ds }}'},
         provide_context = True,
         do_xcom_push=True
@@ -50,6 +103,20 @@ with DAG (
             crawled_date date,
             id text,
             primary key(crawled_date, id)
+        )
+        """
+    )
+
+    create_dim_table = PostgresOperator(
+        task_id='create_dim_table',
+        postgres_conn_id='postgres_localhost',
+        sql="""
+            CREATE TABLE IF NOT EXISTS movies_detail (
+            id text,
+            title text,
+            rating text,
+            director text,
+            primary key(id)
         )
         """
     )
