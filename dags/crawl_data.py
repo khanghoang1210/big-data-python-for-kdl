@@ -57,38 +57,15 @@ def crawl_imdb_data(**items):
         soup = BeautifulSoup(response.text, 'html.parser')
 
         dim_items["title"] = soup.find("span", {"class":"fDTGTb"}).text.replace("'","")
-        dim_items["movie_id"] = id
+        #dim_items["movie_id"] = id
         dim_items["url"] = url.replace("'","")
         dim_items["director"] = soup.find("a", 
-                                          {"class": "ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link"}).text.replace("'","")
+        {"class": "ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link"})\
+            .text.replace("'","")
         #dim_items["crawled_date"] = date
+        dim_items['rating'] = soup.find('span', {'class': "sc-bde20123-1 iZlgcd"}).text
+        #dim_items['genre'] = 
         imdb_data.append(dim_items)
-
-        #div = soup.find_all('div',{'class':'ipc-html-content-inner-div'})
-        
-        #movie_duration = soup.find("li", {"id": "run-time"})#.find("div", {'class':"ipc-html-content-inner-div"})
-        #div_run_time = run_time.find("div", {'class':"ipc-html-content-inner-div"}).text
-        # # Get neccessary data
-        #title = soup.find('h2',{'data-testid': "subtitle"})
-        # movie_duration = div_run_time
-        # rating = div[2].text.split(" ")[0]
-        # director = div[5].text
-        # budget = div[12].text
-        # # worldwide = div[13].text
-        # # genre = (div[16].text).replace(" and","")
-        
-
-
-        # final_data = {}
-        # final_data['title'] = title.text
-        # final_data['id'] = id
-        #final_data['movie_duration'] = soup
-        # final_data['rating'] = rating
-        # final_data['director'] = director
-        # final_data['budget'] = budget
-        # # final_data['worldwide'] = worldwide
-        # # final_data['genre'] = genre
-        # final_data['url'] = url
 
         imdb_data.append(dim_items)
         
