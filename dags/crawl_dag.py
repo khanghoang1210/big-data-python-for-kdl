@@ -28,7 +28,8 @@ def read_and_insert_fact_data(**kwargs):
             item['id'],
             item['rank'],
             item['revenue'],
-            item['gross_change'],
+            item['gross_change_per_day'],
+            item['gross_change_per_week'],
             item['crawled_date']))
 
 
@@ -52,8 +53,8 @@ def read_and_insert_dim_data(**kwargs):
             SET crawled_date = EXCLUDED.crawled_date
             """
         pg_hook.run(sql, parameters=(
-            item['title'],
             item['movie_id'],
+            item['title'],
             item['director'],
             item['rating'], 
             item['crawled_date']))
@@ -70,8 +71,8 @@ with DAG (
     default_args=default_args,
     dag_id='crawl_data',
     description='crawler data from box office and imdb',
-    start_date=datetime(2023, 6, 10),
-    end_date=datetime(2023, 6, 13),
+    start_date=datetime(2023, 7, 1),
+    end_date=datetime(2023, 7, 3),
     schedule_interval='@daily'  
     
 ) as dag:
@@ -120,4 +121,5 @@ with DAG (
         )
         """
     )
-crawl_fact_data >> crawl_dim_data
+crawl_fact_data >> crawl_dim_data 
+[create_fact_table, create_dim_table] 

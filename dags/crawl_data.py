@@ -67,18 +67,17 @@ def crawl_imdb_data(**items) -> list:
         header = {'User-Agent': gav.user_agent}
         response = requests.get(url,headers=header)
         soup = BeautifulSoup(response.text, 'html.parser')
-
-        dim_items["title"] = soup.find("span", {"class":"fDTGTb"}).text.replace("'","")
-
         dim_items["movie_id"] = id
 
+        dim_items["title"] = soup.find("span", {"class":"sc-afe43def-1 fDTGTb"}).text.replace("'","")
+        
         dim_items["director"] = soup.find("a", 
         {"class": "ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link"})\
             .text.replace("'","")
       
-        dim_items['rating'] = soup.find('span', {'class': "sc-bde20123-1 iZlgcd"}).text
+        dim_items["rating"] = soup.find("span", {"class": "sc-bde20123-1 iZlgcd"}).text
 
-        dim_items['crawled_date'] = crawled_date
+        dim_items["crawled_date"] = crawled_date
 
         imdb_data.append(dim_items)
   
