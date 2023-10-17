@@ -22,13 +22,14 @@ def read_and_insert_fact_data(**kwargs):
     for item in json_fact_data:
         sql = """
         INSERT INTO movie_revenue (id, rank, revenue, gross_change, crawled_date)
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s)
         """
         pg_hook.run(sql, parameters=(
             item['id'],
             item['rank'],
             item['revenue'],
-            item['gross_change'],
+            item['gross_change_per_day'],
+            item['gross_change_per_week'],
             item['crawled_date']))
 
 
@@ -46,32 +47,35 @@ def read_and_insert_dim_data(**kwargs):
     for item in json_dim_data:
         sql = """
             insert into movies (movie_id, title, director, rating, crawled_date)
-            values (%s, %s, %s, %s, %s)
+            values (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (movie_id) 
             DO UPDATE
             SET crawled_date = EXCLUDED.crawled_date
             """
         pg_hook.run(sql, parameters=(
-            item['title'],
-            item['movie_id'],
-            item['director'],
-            item['rating'], 
-            item['crawled_date']))
-
+            item['id'],
+            item['duration'] ,
+            item['rating'],
+            item['director'] ,
+            item['budget'],
+            item['worldwide_gross'],
+            item['genre'],
+            item['crawled_date']
+        ))
 
 default_args = {
     'owner' : 'khanghoang',
     'retries': 5,
-    'retry_delay': timedelta(minutes=2)
+    'retry_delay': timedelta(minutes=1)
 }
 
 # Define Dag
 with DAG (
     default_args=default_args,
-    dag_id='crawl_data',
+    dag_id='crawl_and_insert_data_into_db',
     description='crawler data from box office and imdb',
-    start_date=datetime(2023, 6, 10),
-    end_date=datetime(2023, 6, 13),
+    start_date=datetime(2023, 6, 1),
+    end_date=datetime(2023, 6, 3),
     schedule_interval='@daily'  
     
 ) as dag:
@@ -120,4 +124,5 @@ with DAG (
         )
         """
     )
-crawl_fact_data >> crawl_dim_data
+crawl_fact_data >> crawl_dim_data 
+[create_fact_table, create_dim_table] 

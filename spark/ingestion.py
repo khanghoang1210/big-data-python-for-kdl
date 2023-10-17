@@ -1,4 +1,14 @@
 from pyspark.sql import SparkSession
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+# Declare private variables
+sfURL = os.getenv("sfURL")
+sfAccount = os.getenv("sfAccount")
+sfUser = os.getenv("sfUser")
+sfPassword = os.getenv("sfPassword")
 
 spark = SparkSession.builder \
     .master('local')\
@@ -20,11 +30,10 @@ jdbcDF = spark.read \
 jdbcDF.show()
 
 sfOptions = {
-    "sfURL": "https://ytymwtq-bu51995.snowflakecomputing.com",
-    "sfAccount": "bu51995",
-    "sfUser": "khanghoang12",
-    "sfPassword": "Khang12102003@",
-  #  "sfAuthenticator": "oauth",
+    "sfURL": sfURL,
+    "sfAccount": sfAccount,
+    "sfUser": sfUser,
+    "sfPassword": sfPassword,
     "sfDatabase": "DATA_LAKE",
     "sfSchema": "PUBLIC",
     "sfWarehouse": "COMPUTE_WH",
