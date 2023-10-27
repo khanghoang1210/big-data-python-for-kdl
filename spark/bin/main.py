@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from dotenv import load_dotenv
 import os
-from ingestion import read_data_from_postgre
+from ingestion import read_data_from_postgre, ingest_data
 from validations import df_count, df_print_schema ,df_top10_rec
 
 import logging
@@ -31,16 +31,35 @@ try:
     logging.info("Spark object is created.")
     
     # Reading data 
-    movie_revenue_df = read_data_from_postgre(spark, "movie_revenue", db_user, db_password)
+    movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password)
   
-    movies_detail_df = read_data_from_postgre(spark, "movies_detail", db_user, db_password)
+    movies_detail = read_data_from_postgre(spark, "movies_detail", db_user, db_password)
 
     # Validate data
-    df_top10_rec(movie_revenue_df, "movie_revenue_df")
-    df_count(movie_revenue_df, "movie_revenue_df")
+    df_top10_rec(movie_revenue, "movie_revenue")
+    df_count(movie_revenue, "movie_revenue")
 
-    df_top10_rec(movies_detail_df, "movies_detail_df")
-    df_count(movies_detail_df, "movies_detail_df")
+    df_top10_rec(movies_detail, "movies_detail")
+    df_count(movies_detail, "movies_detail")
+
+    # Define connection in Snowflake
+    sfOptions = {
+    "sfURL": sfURL,
+    "sfAccount": sfAccount,
+    "sfUser": sfUser,
+    "sfPassword": sfPassword,
+    "sfDatabase": "DATA_LAKE",
+    "sfSchema": "PUBLIC",
+    "sfWarehouse": "COMPUTE_WH",
+    "sfRole": "ACCOUNTADMIN"
+    }
+
+    # write movie_revenue data frame into data lake
+    ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
+
+    # write movies_detail data frame into data lake
+    ingest_data(spark,sfOptions, movies_detail, "movies_detail")
+
 
     logging.info("main() is Compeleted.")
 except Exception as exp:
