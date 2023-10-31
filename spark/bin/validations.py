@@ -10,6 +10,8 @@ def df_count(df, dfName):
     try:
         logger.info(f"The dataframe validation by count df_count() is started for dataframe {dfName}...")
         df_count = df.count()
+        if df_count == 0:
+            logging.info("No new data from database postgres!")
         logger.info(f"The data frame count is {df_count}.")
     except Exception as exp:
         logger.error("Error in the method - df_count(). Please check the Stack Trace, " + str(exp), exc_info=True)
@@ -22,6 +24,7 @@ def df_top10_rec(df, dfName):
         logger.info(f"The dataframe validation by count df_top10_rec() is started for dataframe {dfName}...")
         logger.info(f"The dataframe top 10 records are: ")
         df_pandas = df.limit(10).toPandas()
+    
         logger.info('\n \t' + df_pandas.to_string(index=False))
     except Exception as exp:
         logger.error("Error in the method - df_top10_rec(). Please check the Stack Trace, " + str(exp), exc_info=True)
