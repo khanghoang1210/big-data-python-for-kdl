@@ -144,7 +144,7 @@ def crawl_imdb_data(**items) -> list:
         final_data['budget'] = budget
         final_data['worldwide_gross'] = worldwide
         final_data['genre'] = genre
-      #  final_data['created_at'] = datetime.now()
+        final_data['crawled_date'] = crawled_date
         imdb_data.append(final_data)
   
     return imdb_data
