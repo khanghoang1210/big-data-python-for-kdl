@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import get_all_variables as gav
+from datetime import datetime
 
 def get_id_boxoffice(url):
     response = requests.get(url)

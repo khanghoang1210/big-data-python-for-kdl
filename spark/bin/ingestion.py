@@ -58,7 +58,7 @@ def read_data_from_postgre(spark, table_name, db_user, db_password, sfOptions):
         record_count = snowflake_df.count()
         print(record_count)
         
-        if record_count == 0:
+        if record_count == 0 or table_name == "movies_detail":
             query = f"(SELECT * FROM {table_name}) AS tmp"
 
         else:
@@ -87,20 +87,19 @@ def read_data_from_postgre(spark, table_name, db_user, db_password, sfOptions):
 def ingest_data(spark, sfOptions, df, df_name):
     try:
         logger.info("Ingestion - ingest_data() is started ...")
-
-
-        
-       
-
         logger.info("Writting data to Snowflake table is started...")
 
-        
+        save_mode = ""
+        if df_name == "movies_detail":
+            save_mode = 'overwrite'
+        elif df_name == "movie_revenue":
+            save_mode = 'append'
         # write data into data lake on snowflake
         df.write\
             .format(SNOWFLAKE_SOURCE_NAME)\
             .options(**sfOptions)\
             .option("dbtable", df_name)\
-            .mode('append')\
+            .mode(save_mode)\
             .save()
     except Exception as exp:
         logger.error(f"Error in the method of {df_name} dataframe - ingest_data(). Please check the Stack Trace, " + str(exp), exc_info=True)
