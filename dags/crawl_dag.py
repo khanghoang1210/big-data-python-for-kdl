@@ -49,8 +49,8 @@ def read_and_insert_dim_data(**kwargs):
     # Iterate over the JSON data and insert it into the 'movies' table
     for item in json_fact_data:
         sql = """
-            insert into movies_detail (id, title, duration, rating, director, budget, worldwide_gross, genre, crawled_date)
-            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            insert into movies_detail (id, title, duration, rating, director, budget, worldwide_gross, genre)
+            values (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) 
             DO UPDATE
             SET crawled_date = EXCLUDED.crawled_date
@@ -64,7 +64,7 @@ def read_and_insert_dim_data(**kwargs):
             item['budget'],
             item['worldwide_gross'],
             item['genre'],
-            item['crawled_date']
+           # item['created_at']
         ))
 
 default_args = {
@@ -130,7 +130,7 @@ with DAG (
             budget text,
             worldwide_gross text,
             genre text,
-            crawled_date date,
+            crawled_date timestamp DEFAULT now(),
             primary key(id)
         )
         """

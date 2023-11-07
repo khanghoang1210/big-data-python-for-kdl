@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import get_all_variables as gav
+from datetime import datetime
 
 def get_id_boxoffice(url):
     response = requests.get(url)
@@ -143,7 +144,7 @@ def crawl_imdb_data(**items) -> list:
         final_data['budget'] = budget
         final_data['worldwide_gross'] = worldwide
         final_data['genre'] = genre
-        final_data['crawled_date'] = crawled_date
+      #  final_data['created_at'] = datetime.now()
         imdb_data.append(final_data)
   
     return imdb_data

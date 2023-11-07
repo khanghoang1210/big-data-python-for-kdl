@@ -13,7 +13,7 @@ def create_snowflake_table(spark,sfOptions, df_name):
          # create table in snowflake
         if df_name == "movie_revenue":
             create_table = f""" CREATE TABLE IF NOT EXISTS movie_revenue (
-                        id varchar,
+                        id varchar primarykey,
                         rank integer,
                         revenue varchar,
                         gross_change_per_day varchar,
