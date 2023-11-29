@@ -2,8 +2,6 @@ import pandas as pd
 
 
 def process_data(input_path, output_path):
-    # Đọc dữ liệu từ file CSV
-    data = pd.read_csv(input_path)
 
     # Xử lý cột 'REVENUE'
     data['REVENUE'] = data['REVENUE'].str.replace(',', '').astype(float)
@@ -23,8 +21,6 @@ def process_data(input_path, output_path):
 
 
 def process_movie_data(input_path, output_path):
-    # Read data from CSV file
-    data = pd.read_csv(input_path)
 
     # Process 'RATING' column: Convert to float
     data['RATING'] = data['RATING'].astype(str).str.extract('(\d+\.?\d*)').astype(float)
