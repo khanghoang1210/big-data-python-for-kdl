@@ -21,7 +21,7 @@ def read_and_insert_fact_data(**kwargs):
 
     for item in json_fact_data:
         sql = """
-        INSERT INTO movie_revenue (id, rank, revenue, gross_change, crawled_date)
+        INSERT INTO movie_revenue (id, rank, revenue, gross_change_per_day, gross_change_per_week, crawled_date)
         VALUES (%s, %s, %s, %s, %s, %s)
         """
         pg_hook.run(sql, parameters=(
@@ -36,25 +36,29 @@ def read_and_insert_fact_data(**kwargs):
 # Insert dim data to PostgreSQL
 def read_and_insert_dim_data(**kwargs):
     ti = kwargs['ti']
+
     crawled_data = ti.xcom_pull(task_ids='crawl_dim_data')
-    
     data = f"""{crawled_data}"""
     data_clean = data.replace("'", '"')
-    json_dim_data = json.loads(data_clean)
+    json_fact_data = json.loads(data_clean)
 
+
+    # Connect to PostgreSQL using a PostgresHook
     pg_hook = PostgresHook(postgres_conn_id='postgres_localhost')
     
-    for item in json_dim_data:
+    # Iterate over the JSON data and insert it into the 'movies' table
+    for item in json_fact_data:
         sql = """
-            insert into movies (movie_id, title, director, rating, crawled_date)
-            values (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (movie_id) 
+            insert into movies_detail (id, title, duration, rating, director, budget, worldwide_gross, genre, crawled_date)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (id) 
             DO UPDATE
             SET crawled_date = EXCLUDED.crawled_date
             """
         pg_hook.run(sql, parameters=(
             item['id'],
-            item['duration'] ,
+            item['title'],
+            item['duration'],
             item['rating'],
             item['director'] ,
             item['budget'],
@@ -74,8 +78,8 @@ with DAG (
     default_args=default_args,
     dag_id='crawl_and_insert_data_into_db',
     description='crawler data from box office and imdb',
-    start_date=datetime(2023, 6, 1),
-    end_date=datetime(2023, 6, 3),
+    start_date=datetime(2023, 6, 7),
+    end_date=datetime(2023, 6, 8),
     schedule_interval='@daily'  
     
 ) as dag:
@@ -102,10 +106,12 @@ with DAG (
         postgres_conn_id='postgres_localhost',
         sql="""
             CREATE TABLE IF NOT EXISTS movie_revenue (
+            id text,
             rank integer,
             revenue text,
+            gross_change_per_day text,
+            gross_change_per_week text,
             crawled_date date,
-            id text,
             primary key(crawled_date, id)
         )
         """
@@ -118,11 +124,32 @@ with DAG (
             CREATE TABLE IF NOT EXISTS movies_detail (
             id text,
             title text,
+            duration text,
             rating text,
             director text,
+            budget text,
+            worldwide_gross text,
+            genre text,
+            crawled_date date,
             primary key(id)
         )
         """
     )
-crawl_fact_data >> crawl_dim_data 
+     # Insert fact data task
+    insert_fact_data_to_postgres = PythonOperator(
+    task_id='insert_fact_data_to_postgres',
+    python_callable=read_and_insert_fact_data,
+    provide_context=True,
+    op_kwargs={} 
+    )
+
+    # Insert dim data task
+    insert_dim_data_to_postgres = PythonOperator(
+        task_id = 'insert_dim_data_to_postgres',
+        python_callable=read_and_insert_dim_data,
+        provide_context = True,
+        op_kwargs={}
+    )
+
+crawl_fact_data >> [insert_fact_data_to_postgres, crawl_dim_data] >> insert_dim_data_to_postgres
 [create_fact_table, create_dim_table] 

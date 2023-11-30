@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import get_all_variables as gav
+from datetime import datetime
 
 def get_id_boxoffice(url):
     response = requests.get(url)
@@ -66,12 +67,20 @@ def crawl_imdb_data(**items) -> list:
 
         url = f"{gav.imdb_path}/{id}/faq/"
 
-        headers = {'User-Agent': gav.user_agent, 'Accept-Language': 'en-US'}
+        headers = {'User-Agent': gav.user_agent, 'Accept-language': 'US-en'}
         response = requests.get(url,headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         data = soup.find_all('div',{'class':'ipc-html-content-inner-div'})
 
     # Get neccessary data
+
+        title = soup.find("h2", {"data-testid": "subtitle"})
+        if not title:
+            print(f"{id} not response")
+            title = 'null'
+        else:
+            title = soup.find("h2", {"data-testid": "subtitle"}).text.replace("'","")
+
         duration = soup.find("li", {"id":"run-time"})
         if not duration:
                 print(f"{id} not response")
@@ -79,7 +88,7 @@ def crawl_imdb_data(**items) -> list:
         else:
             duration = soup.find("li", {"id":"run-time"}).text
             duration_question_mark_index = duration.find('?')
-            duration = duration[duration_question_mark_index+1:]
+            duration = duration[duration_question_mark_index+1:].replace("'","")
 
         rating = soup.find("li", {"id":"imdb-rating"})
         if not rating:
@@ -89,6 +98,7 @@ def crawl_imdb_data(**items) -> list:
             rating = soup.find("li", {"id":"imdb-rating"}).text
             rating_question_mark_index = rating.find('?')
             rating = float(rating[rating_question_mark_index+1:]).replace("out of 10","")
+            rating = rating[rating_question_mark_index+1:].replace("'","")
 
         director = soup.find("li", {"id":"director"})
         if not director:
@@ -97,7 +107,7 @@ def crawl_imdb_data(**items) -> list:
         else:
             director = soup.find("li", {"id":"director"}).text
             director_question_mark_index = director.find('?')
-            director = director[director_question_mark_index+1:]
+            director = director[director_question_mark_index+1:].replace("'","")
 
 
         budget = soup.find("li", {"id":"budget"})
@@ -107,7 +117,7 @@ def crawl_imdb_data(**items) -> list:
         else:   
             budget = soup.find("li", {"id":"budget"}).text
             budget_question_mark_index = budget.find('?')
-            budget = budget[budget_question_mark_index+1:]
+            budget = budget[budget_question_mark_index+1:].replace("'","")
 
         worldwide = soup.find("li", {"id":"box-office-earnings"})
         if not worldwide:
@@ -115,7 +125,7 @@ def crawl_imdb_data(**items) -> list:
         else:
             worldwide = soup.find("li", {"id":"box-office-earnings"}).text
             worldwide_question_mark_index = worldwide.find('?')
-            worldwide = worldwide[worldwide_question_mark_index+1:]
+            worldwide = worldwide[worldwide_question_mark_index+1:].replace("'","")
 
         genre = soup.find("li", {"id":"genre"})
         if not genre:
@@ -124,10 +134,11 @@ def crawl_imdb_data(**items) -> list:
         else:
             genre = soup.find("li", {"id":"genre"}).text
             genre_question_mark_index = genre.find('?')
-            genre = genre[genre_question_mark_index+1:]
+            genre = genre[genre_question_mark_index+1:].replace("'","")
         
         final_data = {}
         final_data['id'] = id
+        final_data['title'] = title
         final_data['duration'] = duration
         final_data['rating'] = rating
         final_data['director'] = director
