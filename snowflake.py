@@ -1,18 +1,19 @@
 import snowflake.connector
+import userandpassword as uap
 
 conn = snowflake.connector.connect(
-    user="khanghoang12",
-    password="Khang12102003@",
-    account="hwtmedy-oo41311",
-    # account="sh27034.ap-southeast-1",
+    user=uap.username,
+    password=uap.password,
+    # account="hwtmedy-oo41311",
+    account="sh27034.ap-southeast-1",
     warehouse="COMPUTE_WH",
     database="DATA_LAKE",
-    schema="TEST_PUBLIC_HH",
+    schema="PUBLIC_TEST_HH",
     role="ACCOUNTADMIN",
 )
 
 cur = conn.cursor()
-sql = "select * from data_lake.test_public_hh.analyst"
+sql = "select * from data_lake.public_test_hh.analyst"
 cur.execute(sql)
-df = cur.fetch_pandas_all()
-print(df.to_string())
+data = cur.fetch_pandas_all()
+print(data.to_string())
