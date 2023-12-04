@@ -1,51 +1,88 @@
-import pandas as pd
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import regexp_replace, col, when, udf, expr
+from pyspark.sql.types import FloatType, StringType
 
-SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
-def process_weekly_df(sfOptions, spark):
+# Function to initialize Spark session
+def create_spark_session():
+    spark = SparkSession.builder \
+        .appName("Data Processing with Snowflake") \
+        .config("spark.jars.packages", "net.snowflake:snowflake-jdbc:3.13.3,net.snowflake:spark-snowflake_2.12:2.9.2-spark_3.1") \
+        .getOrCreate()
+    return spark
 
-    df = spark.read.format(SNOWFLAKE_SOURCE_NAME) \
-                    .options(**sfOptions) \
-                    .option("query",  "select * from movie_revenue")\
-                    .load()
+# Function to get Snowflake connection options
+def get_snowflake_options():
+    return {
+        "sfURL": "<your_snowflake_account_url>",
+        "sfUser": "<your_username>",
+        "sfPassword": "<your_password>",
+        "sfDatabase": "<your_database>",
+        "sfSchema": "<your_schema>",
+        "sfWarehouse": "<your_warehouse>",
+        "sfRole": "<your_role>",
+    }
 
-    # Xử lý cột 'REVENUE'
-    #data = pd.DataFrame(df)d
-    print(df.show())
-    # df['revenue'] = df['revenue'].str.replace(',', '').astype(float)
-    # print(df['revenue'])
+# Function to read data from Snowflake
+def read_snowflake_data(spark, options, table_name):
+    df = spark.read \
+        .format("net.snowflake.spark.snowflake") \
+        .options(**options) \
+        .option("dbtable", table_name) \
+        .load()
+    return df
 
-    # # Thay thế giá trị '-' bằng 0 trong cột 'GROSS_CHANGE_PER_DAY' và 'GROSS_CHANGE_PER_WEEK'
-    # df['GROSS_CHANGE_PER_DAY'] = df['GROSS_CHANGE_PER_DAY'].replace('-', '0')
-    # df['GROSS_CHANGE_PER_WEEK'] = df['GROSS_CHANGE_PER_WEEK'].replace('-', '0')
-    # # Xử lý cột 'GROSS_CHANGE_PER_DAY'
-    # df['GROSS_CHANGE_PER_DAY'] = df['GROSS_CHANGE_PER_DAY'].str.replace('%', '').str.replace(',', '').astype(float)
-    # df['GROSS_CHANGE_PER_DAY'].fillna(0, inplace=True)
+# Function to process general data
+def process_data(df):
+    # Process 'REVENUE' column
+    df = df.withColumn('REVENUE', regexp_replace('REVENUE', ',', '').cast(FloatType()))
 
-    # # Xử lý cột 'GROSS_CHANGE_PER_WEEK'
-    # df['GROSS_CHANGE_PER_WEEK'] = df['GROSS_CHANGE_PER_WEEK'].str.replace('%', '').str.replace(',', '').astype(
-    #     float)
-    # df['GROSS_CHANGE_PER_WEEK'].fillna(0, inplace=True)
+    # Replace '-' with '0' in 'GROSS_CHANGE_PER_DAY' and 'GROSS_CHANGE_PER_WEEK'
+    df = df.withColumn('GROSS_CHANGE_PER_DAY', when(col('GROSS_CHANGE_PER_DAY') == '-', 0).otherwise(regexp_replace('GROSS_CHANGE_PER_DAY', '%', '').cast(FloatType())))
+    df = df.withColumn('GROSS_CHANGE_PER_WEEK', when(col('GROSS_CHANGE_PER_WEEK') == '-', 0).otherwise(regexp_replace('GROSS_CHANGE_PER_WEEK', '%', '').cast(FloatType())))
 
+    return df
 
-def process_movie_df(df):
-    #data = pd.DataFrame(df)
-    print(df)
-    #Process 'RATING' column: Convert to float
-    df['RATING'] = df['RATING'].astype(str).str.extract('(\d+\.?\d*)').astype(float)
+# Spark UDF for converting monetary values
+def convert_monetary_values(value):
+    if value is None:
+        return 20e6
+    value = value.replace(' million', '').replace('$', '').replace(',', '')
+    try:
+        return float(value) * 1e6 if 'million' in value else float(value)
+    except ValueError:
+        return 0.0
 
-    # Function to convert monetary values
-    def convert_monetary_values(value):
-        if pd.isna(value):
-            return 20e6  # Default value for nulls
-        value = value.replace(' million', '').replace('$', '').replace(',', '')
-        try:
-            return float(value) * 1e6 if 'million' in value else float(value)
-        except ValueError:
-            return 0.0
+convert_monetary_udf = udf(convert_monetary_values, FloatType())
+
+# Function to process movie-specific data
+def process_movie_data(df):
+    # Process 'RATING' column
+    df = df.withColumn('RATING', regexp_replace('RATING', '[^0-9.]', '').cast('float'))
 
     # Process 'BUDGET' and 'WORLDWIDE_GROSS' columns
-    df['BUDGET'] = df['BUDGET'].apply(convert_monetary_values)
-    df['WORLDWIDE_GROSS'] = df['WORLDWIDE_GROSS'].apply(convert_monetary_values)
+    df = df.withColumn('BUDGET', convert_monetary_udf('BUDGET'))
+    df = df.withColumn('WORLDWIDE_GROSS', convert_monetary_udf('WORLDWIDE_GROSS'))
 
-    # Process 'GENRE' column: Handling specific text patterns
-    df['GENRE'] = df['GENRE'].str.replace('Its Me, Margaret.?', '', regex=True)
+    # Process 'GENRE' column
+    df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
+
+    return df
+
+# Main execution function
+def main():
+    spark = create_spark_session()
+    snowflake_options = get_snowflake_options()
+    table_name = "<your_table_name>"
+
+    # Read data from Snowflake
+    data = read_snowflake_data(spark, snowflake_options, table_name)
+
+    # Process the data using both functions
+    processed_data = process_data(data)
+    processed_movie_data = process_movie_data(processed_data)
+
+
+    spark.stop()
+
+if __name__ == "__main__":
+    main()
