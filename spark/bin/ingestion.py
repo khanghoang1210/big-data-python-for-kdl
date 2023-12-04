@@ -76,7 +76,8 @@ def read_data_from_postgre(spark, table_name, db_user, db_password, sfOptions):
                     .load()
       
     except Exception as exp:
-        logger.error("Error in the method - read_data_from_postgres(). Please check the Stack Trace. " + str(exp),exc_info=True)  
+        logger.error("Error in the method - read_data_from_postgres(). Please check the Stack Trace. " + 
+        str(exp),exc_info=True)  
     
     else:
         logger.info("Read data from postgreSQL - read_data_from_postgre() is completed.")
