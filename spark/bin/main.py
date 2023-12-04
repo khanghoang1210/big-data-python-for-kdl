@@ -2,8 +2,8 @@ from pyspark.sql import SparkSession
 from dotenv import load_dotenv
 import os
 from ingestion import read_data_from_postgre, ingest_data, create_snowflake_table
-from data_preprocessing import process_movie_df, process_weekly_df
 from validations import df_count, df_print_schema ,df_top10_rec
+from data_preprocessing import data_preprocess
 
 import logging
 import logging.config
@@ -25,7 +25,7 @@ sfOptions = {
 "sfUser": sfUser,
 "sfPassword": sfPassword,
 "sfDatabase": "DATA_LAKE",
-"sfSchema": "PUBLIC",
+"sfSchema": "BROZEN",
 "sfWarehouse": "COMPUTE_WH",
 "sfRole": "ACCOUNTADMIN"
 }
@@ -63,12 +63,12 @@ try:
     ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
 
     # write movies_detail data frame into data lake
-    ingest_data(spark,sfOptions, movies_detail, "movies_detail")
+    ingest_data(spark, sfOptions, movies_detail, "movies_detail")
 
-    process_weekly_df(sfOptions, spark)
+    # preprocessing data
+    data_preprocess(spark, sfOptions, "movie_revenue")
+    data_preprocess(spark, sfOptions, "movies_detail")
    # process_movie_df(movies_detail)
-
-
 
 
     logging.info("main() is Compeleted.")
