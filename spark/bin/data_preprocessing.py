@@ -3,9 +3,10 @@ from pyspark.sql.functions import regexp_replace, col, when, udf, expr
 from pyspark.sql.types import FloatType
 from udfs import convert_monetary_values
 
+SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
 convert_monetary_udf = udf(convert_monetary_values, FloatType())
 # Function to read data from Snowflake
-def data_preprocess(spark, sfOptions, table_name):
+def preprocess_data_and_write_to_silver(spark, sfOptions, table_name):
     df = spark.read \
         .format("net.snowflake.spark.snowflake") \
         .options(**sfOptions) \
@@ -23,6 +24,12 @@ def data_preprocess(spark, sfOptions, table_name):
                            .otherwise(regexp_replace('GROSS_CHANGE_PER_DAY', '%', '').cast(FloatType())))
         df = df.withColumn('GROSS_CHANGE_PER_WEEK', when(col('GROSS_CHANGE_PER_WEEK') == '-', 0)\
                            .otherwise(regexp_replace('GROSS_CHANGE_PER_WEEK', '%', '').cast(FloatType())))
+        df.write\
+            .format(SNOWFLAKE_SOURCE_NAME)\
+            .options(**sfOptions)\
+            .option("dbtable", table_name)\
+            .mode("append")\
+            .save()
 
 
     if table_name == "movies_detail":

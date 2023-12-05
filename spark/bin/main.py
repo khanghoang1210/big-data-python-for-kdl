@@ -25,7 +25,7 @@ sfOptions = {
 "sfUser": sfUser,
 "sfPassword": sfPassword,
 "sfDatabase": "DATA_LAKE",
-"sfSchema": "BROZEN",
+"sfSchema": "BRONZE",
 "sfWarehouse": "COMPUTE_WH",
 "sfRole": "ACCOUNTADMIN"
 }
@@ -65,9 +65,9 @@ try:
     # write movies_detail data frame into data lake
     ingest_data(spark, sfOptions, movies_detail, "movies_detail")
 
-    # preprocessing data
-    data_preprocess(spark, sfOptions, "movie_revenue")
-    data_preprocess(spark, sfOptions, "movies_detail")
+    # # preprocessing data
+    # data_preprocess(spark, sfOptions, "movie_revenue")
+    # data_preprocess(spark, sfOptions, "movies_detail")
    # process_movie_df(movies_detail)
 
 
