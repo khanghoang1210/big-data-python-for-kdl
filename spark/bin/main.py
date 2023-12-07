@@ -24,7 +24,7 @@ sfOptions = {
 "sfUser": sfUser,
 "sfPassword": sfPassword,
 "sfDatabase": "DATA_LAKE",
-"sfSchema": "PUBLIC",
+"sfSchema": "BRONZE",
 "sfWarehouse": "COMPUTE_WH",
 "sfRole": "ACCOUNTADMIN"
 }

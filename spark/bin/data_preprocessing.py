@@ -3,24 +3,8 @@ from pyspark.sql.functions import regexp_replace, col, when, udf, expr
 from pyspark.sql.types import FloatType, StringType
 
 # Function to initialize Spark session
-def create_spark_session():
-    spark = SparkSession.builder \
-        .appName("Data Processing with Snowflake") \
-        .config("spark.jars.packages", "net.snowflake:snowflake-jdbc:3.13.3,net.snowflake:spark-snowflake_2.12:2.9.2-spark_3.1") \
-        .getOrCreate()
-    return spark
 
-# Function to get Snowflake connection options
-def get_snowflake_options():
-    return {
-        "sfURL": "<your_snowflake_account_url>",
-        "sfUser": "<your_username>",
-        "sfPassword": "<your_password>",
-        "sfDatabase": "<your_database>",
-        "sfSchema": "<your_schema>",
-        "sfWarehouse": "<your_warehouse>",
-        "sfRole": "<your_role>",
-    }
+
 
 # Function to read data from Snowflake
 def read_snowflake_data(spark, options, table_name):
