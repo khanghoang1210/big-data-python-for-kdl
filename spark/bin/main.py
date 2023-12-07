@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 from ingestion import read_data_from_postgre, ingest_data, create_snowflake_table
 from validations import df_count, df_print_schema ,df_top10_rec
+from data_preprocessing import data_preprocess
 
 import logging
 import logging.config
@@ -58,14 +59,15 @@ try:
 
 
     # write movie_revenue data frame into data lake
-    ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
+    #ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
 
     # write movies_detail data frame into data lake
-    ingest_data(spark,sfOptions, movies_detail, "movies_detail")
-
+    #ingest_data(spark,sfOptions, movies_detail, "movies_detail")
+      # # preprocessing data
+    data_preprocess(spark, sfOptions, "movie_revenue")
+    data_preprocess(spark, sfOptions, "movies_detail")
+    #process_movie_df(movies_detail)
 
     logging.info("main() is Compeleted.")
 except Exception as exp:
         logging.error("Error occured in the main() method. Please check the Stack Trace, " + str(exp), exc_info=True)
-
-   

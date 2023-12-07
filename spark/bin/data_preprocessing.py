@@ -1,72 +1,50 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import regexp_replace, col, when, udf, expr
-from pyspark.sql.types import FloatType, StringType
+from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull
+from pyspark.sql.types import FloatType
 
-# Function to initialize Spark session
-
+def convert_to_number(column):
+    # Trích xuất số và kiểm tra xem có chứa từ "million" không
+    number = regexp_extract(column, r'(\d+\.?\d*)', 1).cast('float')
+    is_million = when(col(column).contains('million'), 1e6).otherwise(1)
+    return number * is_million
 
 
 # Function to read data from Snowflake
-def read_snowflake_data(spark, options, table_name):
+def data_preprocess(spark, sfOptions, table_name):
     df = spark.read \
         .format("net.snowflake.spark.snowflake") \
-        .options(**options) \
+        .options(**sfOptions) \
         .option("dbtable", table_name) \
         .load()
-    return df
+
 
 # Function to process general data
-def process_data(df):
-    # Process 'REVENUE' column
-    df = df.withColumn('REVENUE', regexp_replace('REVENUE', ',', '').cast(FloatType()))
+    if table_name == "movie_revenue":
+        # Process 'REVENUE' column
+        df = df.withColumn('REVENUE', when(isnull('REVENUE'), 0).otherwise(regexp_replace('REVENUE', ',', '').cast(FloatType())))
+        df = df.withColumn('GROSS_CHANGE_PER_DAY', when(col('GROSS_CHANGE_PER_DAY') == '-', 0)\
+                           .otherwise(when(isnull('GROSS_CHANGE_PER_DAY'), 0).otherwise(regexp_replace('GROSS_CHANGE_PER_DAY', '%', '').cast(FloatType()))))
+        df = df.withColumn('GROSS_CHANGE_PER_WEEK', when(col('GROSS_CHANGE_PER_WEEK') == '-', 0)\
+                           .otherwise(when(isnull('GROSS_CHANGE_PER_WEEK'), 0).otherwise(regexp_replace('GROSS_CHANGE_PER_WEEK', '%', '').cast(FloatType()))))
 
-    # Replace '-' with '0' in 'GROSS_CHANGE_PER_DAY' and 'GROSS_CHANGE_PER_WEEK'
-    df = df.withColumn('GROSS_CHANGE_PER_DAY', when(col('GROSS_CHANGE_PER_DAY') == '-', 0).otherwise(regexp_replace('GROSS_CHANGE_PER_DAY', '%', '').cast(FloatType())))
-    df = df.withColumn('GROSS_CHANGE_PER_WEEK', when(col('GROSS_CHANGE_PER_WEEK') == '-', 0).otherwise(regexp_replace('GROSS_CHANGE_PER_WEEK', '%', '').cast(FloatType())))
+        # Xóa tất cả các dòng có ít nhất một giá trị null
+        df = df.dropna()
 
-    return df
+    if table_name == "movies_detail":
+        # Process 'RATING' column
+        df = df.withColumn('RATING', regexp_replace('RATING', '[^0-9.]', '').cast('float'))
 
-# Spark UDF for converting monetary values
-def convert_monetary_values(value):
-    if value is None:
-        return 20e6
-    value = value.replace(' million', '').replace('$', '').replace(',', '')
-    try:
-        return float(value) * 1e6 if 'million' in value else float(value)
-    except ValueError:
-        return 0.0
+        # Process 'BUDGET' and 'WORLDWIDE_GROSS' columns
+        df = df.withColumn('BUDGET', convert_to_number('BUDGET'))
+        df = df.withColumn('WORLDWIDE_GROSS', convert_to_number('WORLDWIDE_GROSS'))
+        # Remove rows containing specific string in any column
+        condition = " or ".join([f"contains({col}, 'Its Me, Margaret.')" for col in df.columns])
+        df = df.filter(f"not ({condition})")
 
-convert_monetary_udf = udf(convert_monetary_values, FloatType())
+        # Remove rows with excessive missing data
+        df = df.dropna(thresh=len(df.columns) - 2)
 
-# Function to process movie-specific data
-def process_movie_data(df):
-    # Process 'RATING' column
-    df = df.withColumn('RATING', regexp_replace('RATING', '[^0-9.]', '').cast('float'))
+        # Process 'GENRE' column
+        df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
 
-    # Process 'BUDGET' and 'WORLDWIDE_GROSS' columns
-    df = df.withColumn('BUDGET', convert_monetary_udf('BUDGET'))
-    df = df.withColumn('WORLDWIDE_GROSS', convert_monetary_udf('WORLDWIDE_GROSS'))
-
-    # Process 'GENRE' column
-    df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
-
-    return df
-
-# Main execution function
-def main():
-    spark = create_spark_session()
-    snowflake_options = get_snowflake_options()
-    table_name = "<your_table_name>"
-
-    # Read data from Snowflake
-    data = read_snowflake_data(spark, snowflake_options, table_name)
-
-    # Process the data using both functions
-    processed_data = process_data(data)
-    processed_movie_data = process_movie_data(processed_data)
-
-
-    spark.stop()
-
-if __name__ == "__main__":
-    main()
+    print(df.show())
+    print(df.printSchema())
