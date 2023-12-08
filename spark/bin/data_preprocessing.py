@@ -1,5 +1,16 @@
 from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull
 from pyspark.sql.types import FloatType
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+# Declare private variables
+sfURL = os.getenv("sfURL")
+sfAccount = os.getenv("sfAccount")
+sfUser = os.getenv("sfUser")
+sfPassword = os.getenv("sfPassword")
+db_user = os.getenv("db_user")
+db_password = os.getenv("db_password")
 
 def convert_to_number(column):
     # Trích xuất số và kiểm tra xem có chứa từ "million" không
@@ -10,9 +21,19 @@ def convert_to_number(column):
 
 SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
 # Function to read data from Snowflake
-def data_preprocess(spark, sfOptions, table_name):
+def data_preprocess_and_write_to_silver(spark, snowflake_database, snowflake_schema, table_name):
+    sfOptions = {
+    "sfURL": sfURL,
+    "sfAccount": sfAccount,
+    "sfUser": sfUser,
+    "sfPassword": sfPassword,
+    "sfDatabase": snowflake_database,
+    "sfSchema": snowflake_schema,
+    "sfWarehouse": "COMPUTE_WH",
+    "sfRole": "ACCOUNTADMIN"
+}
     df = spark.read \
-        .format("net.snowflake.spark.snowflake") \
+        .format(SNOWFLAKE_SOURCE_NAME) \
         .options(**sfOptions) \
         .option("dbtable", table_name) \
         .load()
@@ -49,3 +70,9 @@ def data_preprocess(spark, sfOptions, table_name):
 
     print(df.show())
     print(df.printSchema())
+    df.write\
+            .format(SNOWFLAKE_SOURCE_NAME)\
+            .options(**sfOptions)\
+            .option("dbtable", table_name)\
+            .mode("append")\
+            .save()
