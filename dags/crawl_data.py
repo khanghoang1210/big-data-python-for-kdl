@@ -97,7 +97,7 @@ def crawl_imdb_data(**items) -> list:
         else:
             rating = soup.find("li", {"id":"imdb-rating"}).text
             rating_question_mark_index = rating.find('?')
-            rating = float(rating[rating_question_mark_index+1:]).replace("out of 10","")
+            rating = (rating[rating_question_mark_index+1:])
             rating = rating[rating_question_mark_index+1:].replace("'","")
 
         director = soup.find("li", {"id":"director"})
