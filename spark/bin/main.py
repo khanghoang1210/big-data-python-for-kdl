@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from ingestion import read_data_from_postgre, ingest_data, create_snowflake_table
 from validations import df_count, df_print_schema ,df_top10_rec
-from data_preprocessing import data_preprocess
+# from data_preprocessing import data_preprocess
 
 import logging
 import logging.config
