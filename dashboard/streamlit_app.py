@@ -41,7 +41,8 @@ import plost
 import matplotlib.pyplot as plt
 
 with open('user_account.txt', 'r') as file:
-    user, password = file.readlines()
+    account, user, password = file.readlines()
+    account = account.rstrip()
     user = user.rstrip()
 
 id_col = 'ID'
@@ -55,8 +56,7 @@ revenue_col = 'WEEKLY_REVENUE'
 conn = snowflake.connector.connect(
     user= user,
     password = password,
-    # account="hwtmedy-oo41311",
-    account="sh27034.ap-southeast-1",
+    account=account,
     warehouse="COMPUTE_WH",
     database="DATA_LAKE",
     schema="PUBLIC_TEST_HH",
@@ -148,15 +148,15 @@ def search_function(df, text, col):
         st.write('No Result Found !')
 
 def draw_rating_barchart(df):
-    plost.bar_chart(
-        data= df,
-        bar= 'TITLE',
-        value= 'RATING',
-        color= 'maroon',
-        width= 800,
-        use_container_width= True
-    )
-    # st.bar_chart(df[rating_col])
+    # plost.bar_chart(
+    #     data= df,
+    #     bar= 'TITLE',
+    #     value= 'RATING',
+    #     color= 'maroon',
+    #     width= 800,
+    #     use_container_width= True
+    # )
+    st.bar_chart(df[rating_col])
 
 
 
