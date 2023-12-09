@@ -3,13 +3,16 @@ from dotenv import load_dotenv
 import os
 from ingestion import read_data_from_postgre, ingest_data, create_snowflake_table
 from validations import df_count, df_print_schema ,df_top10_rec
-from data_preprocessing import data_preprocess
+from data_preprocessing import data_preprocess_and_write_to_silver
 
 import logging
 import logging.config
 
 logging.config.fileConfig(fname='./spark/utils/logging_to_file.conf')
 load_dotenv()
+
+database_name = ""
+schema_name = ""
 
 # Declare private variables
 sfURL = os.getenv("sfURL")
@@ -18,14 +21,15 @@ sfUser = os.getenv("sfUser")
 sfPassword = os.getenv("sfPassword")
 db_user = os.getenv("db_user")
 db_password = os.getenv("db_password")
-    # Define connection in Snowflake
+
+# Define connection in Snowflake
 sfOptions = {
 "sfURL": sfURL,
 "sfAccount": sfAccount,
 "sfUser": sfUser,
 "sfPassword": sfPassword,
 "sfDatabase": "DATA_LAKE",
-"sfSchema": "BROZEN",
+"sfSchema": "BRONZE",
 "sfWarehouse": "COMPUTE_WH",
 "sfRole": "ACCOUNTADMIN"
 }
@@ -42,12 +46,12 @@ try:
         .getOrCreate()
     logging.info("Spark object is created.")
 
-    create_snowflake_table(spark,sfOptions, "movie_revenue")
-    create_snowflake_table(spark, sfOptions, "movies_detail")
+    create_snowflake_table(spark,"DATA_LAKE", "BRONZE", "movie_revenue")
+    create_snowflake_table(spark, "DATA_LAKE", "BRONZE", "movies_detail")
     # Reading data 
-    movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password, sfOptions)
+    movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password, "DATA_LAKE", "BRONZE")
   
-    movies_detail = read_data_from_postgre(spark, "movies_detail", db_user, db_password, sfOptions)
+    movies_detail = read_data_from_postgre(spark, "movies_detail", db_user, db_password, "DATA_LAKE", "BRONZE")
 
 
     # Validate data
@@ -60,19 +64,16 @@ try:
 
 
     # write movie_revenue data frame into data lake
-    ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
+    ingest_data(spark,"DATA_LAKE", "BRONZE",movie_revenue, "movie_revenue")
 
     # write movies_detail data frame into data lake
-    ingest_data(spark, sfOptions, movies_detail, "movies_detail")
+    ingest_data(spark,"DATA_LAKE", "BRONZE", movies_detail, "movies_detail")
 
     # preprocessing data
-    data_preprocess(spark, sfOptions, "movie_revenue")
-    data_preprocess(spark, sfOptions, "movies_detail")
-   # process_movie_df(movies_detail)
-
+    data_preprocess_and_write_to_silver(spark, "DATA_LAKE","SILVER", "movie_revenue")
+    data_preprocess_and_write_to_silver(spark, "DATA_LAKE","SILVER", "movies_detail")
+    #process_movie_df(movies_detail)
 
     logging.info("main() is Compeleted.")
 except Exception as exp:
         logging.error("Error occured in the main() method. Please check the Stack Trace, " + str(exp), exc_info=True)
-
-   
