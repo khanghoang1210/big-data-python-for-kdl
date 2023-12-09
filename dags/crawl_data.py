@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import get_all_variables as gav
+from datetime import datetime
 
 def get_id_boxoffice(url):
     response = requests.get(url)
@@ -73,7 +74,12 @@ def crawl_imdb_data(**items) -> list:
 
     # Get neccessary data
 
-        title = soup.find("h2", {"data-testid": "subtitle"}).text.replace("'","")
+        title = soup.find("h2", {"data-testid": "subtitle"})
+        if not title:
+            print(f"{id} not response")
+            title = 'null'
+        else:
+            title = soup.find("h2", {"data-testid": "subtitle"}).text.replace("'","")
 
         duration = soup.find("li", {"id":"run-time"})
         if not duration:
