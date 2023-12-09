@@ -45,6 +45,9 @@ def data_preprocess(spark, sfOptions, table_name):
 
         # Process 'GENRE' column
         df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
+        
+        
+        
 
     print(df.show())
     print(df.printSchema())

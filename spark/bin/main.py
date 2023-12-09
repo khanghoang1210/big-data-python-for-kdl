@@ -59,10 +59,10 @@ try:
 
 
     # write movie_revenue data frame into data lake
-    #ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
+    ingest_data(spark,sfOptions, movie_revenue, "movie_revenue")
 
     # write movies_detail data frame into data lake
-    #ingest_data(spark,sfOptions, movies_detail, "movies_detail")
+    ingest_data(spark,sfOptions, movies_detail, "movies_detail")
       # # preprocessing data
     data_preprocess(spark, sfOptions, "movie_revenue")
     data_preprocess(spark, sfOptions, "movies_detail")
