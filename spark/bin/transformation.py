@@ -56,7 +56,7 @@ try:
     "sfUser": sfUser,
     "sfPassword": sfPassword,
     "sfDatabase": "DATA_LAKE",
-    "sfSchema": "BRONZE",
+    "sfSchema": "SILVER",
     "sfWarehouse": "COMPUTE_WH",
     "sfRole": "ACCOUNTADMIN"
     }
@@ -82,22 +82,23 @@ try:
             .options(**sfOptions) \
             .option("dbtable", "movie_revenue") \
             .load()
-    print(movie_revenue.printSchema())
-    print(movie_revenue.show())
+    df_joined = movie_revenue.join(movies_detail, movie_revenue.ID == movies_detail.ID).drop(movies_detail.CRAWLED_DATE)
+    print(df_joined.show())
     # # Transform datatype of columns
-    movie_revenue = movie_revenue.withColumn("crawled_date", movie_revenue.crawled_date.cast("date"))
-
+    weekly_revenue = movie_revenue.groupBy("ID").agg(sum("REVENUE").alias("total_revenue"))
+    df = movies_detail.select(col("ID"), col("TITLE"))
     
 
     # Get available columns
     # df = df_movies.select(col("movie_id").alias("id"), col("title"))
-    # total_revenue = df_revenue.groupBy("id").agg(sum("revenue").alias("total_revenue"))
+    # 
 
     # # Join main columns 
     # df_joined = df_revenue.join(df_movies, df_revenue.id == df_movies.movie_id).drop(df_movies.crawled_date)
 
     # # Get latest week
-    # max_crawled_date = df_joined.select(max(col('crawled_date'))).collect()[0][0]
+    max_crawled_date = df_joined.select(max(col('CRAWLED_DATE'))).collect()[0][0]
+    print(max_crawled_date)
     # seven_days_ago = max_crawled_date - expr("INTERVAL 7 DAYS")
     # df_filtered = df_joined.filter(col('crawled_date') >= seven_days_ago)
 
