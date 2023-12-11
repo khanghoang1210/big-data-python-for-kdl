@@ -68,13 +68,14 @@ try:
     ingest_data(spark,"DATA_LAKE", "BRONZE", movies_detail, "movies_detail")
 
     # create table in silver zone
-    create_snowflake_table(spark,"DATA_LAKE", "SILVER", "movie_revenue")
-    create_snowflake_table(spark, "DATA_LAKE", "SILVER", "movies_detail")
+    # create_snowflake_table(spark,"DATA_LAKE", "SILVER", "movie_revenue")
+    # create_snowflake_table(spark, "DATA_LAKE", "SILVER", "movies_detail")
 
     # preprocessing data
     movie_revenue_clean = data_preprocess(spark, "DATA_LAKE", "BRONZE", "movie_revenue")
     movies_detail_clean = data_preprocess(spark, "DATA_LAKE", "BRONZE", "movies_detail")
-
+    df_print_schema(movie_revenue_clean, "revenue")
+    df_print_schema(movies_detail_clean, "movie")
     # write data into silver zone
     write_data_to_silver_zone(spark, "DATA_LAKE", "SILVER",movie_revenue_clean, "movie_revenue")
     write_data_to_silver_zone(spark, "DATA_LAKE", "SILVER",movies_detail_clean, "movies_detail")
