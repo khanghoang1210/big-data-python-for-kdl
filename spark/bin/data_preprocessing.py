@@ -99,7 +99,7 @@ def write_data_to_silver_zone(spark, snowflake_database, snowflake_schema, df, t
         if table_name == "movies_detail":
             save_mode = 'overwrite'
         elif table_name == "movie_revenue":
-            save_mode = 'append'
+            save_mode = 'overwrite'
         df.write\
                 .format(SNOWFLAKE_SOURCE_NAME)\
                 .options(**sfOptions)\

@@ -28,17 +28,6 @@ import logging
 import logging.config
 import os
 from dotenv import load_dotenv
-## Report:
-    # 1.ID
-    # 2.Title
-    # 3.month_revenue
-    # 4.total_revenue
-    # 5.rank_change
-# Set logger 
-# logging.config.fileConfig(fname='./spark/config/logging.conf')
-# logger = logging.getLogger(__name__)
-
-# Declare private variables
 
 try:
     load_dotenv()
@@ -60,7 +49,6 @@ try:
     "sfWarehouse": "COMPUTE_WH",
     "sfRole": "ACCOUNTADMIN"
     }
-    print(sfOptions)
 
     #logger.info("Transformation is started...")
     # Create Spark Object
@@ -82,70 +70,50 @@ try:
             .options(**sfOptions) \
             .option("dbtable", "movie_revenue") \
             .load()
-    df_joined = movie_revenue.join(movies_detail, movie_revenue.ID == movies_detail.ID).drop(movies_detail.CRAWLED_DATE)
-    print(df_joined.show())
-    # # Transform datatype of columns
-    weekly_revenue = movie_revenue.groupBy("ID").agg(sum("REVENUE").alias("total_revenue"))
+    df_joined = movie_revenue.join(movies_detail, movie_revenue.ID == movies_detail.ID)\
+        .drop(movies_detail.CRAWLED_DATE).drop(movie_revenue.ID)
+
     df = movies_detail.select(col("ID"), col("TITLE"))
     
 
-    # Get available columns
-    # df = df_movies.select(col("movie_id").alias("id"), col("title"))
-    # 
-
-    # # Join main columns 
-    # df_joined = df_revenue.join(df_movies, df_revenue.id == df_movies.movie_id).drop(df_movies.crawled_date)
-
-    # # Get latest week
+    # Get latest day in week to calc sum revenue
     max_crawled_date = df_joined.select(max(col('CRAWLED_DATE'))).collect()[0][0]
-    print(max_crawled_date)
-    # seven_days_ago = max_crawled_date - expr("INTERVAL 7 DAYS")
-    # df_filtered = df_joined.filter(col('crawled_date') >= seven_days_ago)
+    min_crawled_date = df_joined.select(min(col('CRAWLED_DATE'))).collect()[0][0]
 
-    # # Get week revenue of each movie
-    # df_week_revenue = df_filtered.groupBy('movie_id').agg(sum('revenue').alias('week_revenue'))
+    seven_days_ago = max_crawled_date - expr("INTERVAL 7 DAYS")
+    df_filtered = df_joined.filter(col('crawled_date') >= seven_days_ago)
 
-    # # Join dataframe
-    # df_res = df.join(total_revenue, df["id"]==total_revenue["id"],"right")\
-    #         .join(df_week_revenue, df.id==df_week_revenue.movie_id).drop("movie_id")\
-    #                                                                 .drop(total_revenue["id"])
+    # Get week revenue of each movie
+    df_weekly_revenue = df_filtered.groupBy('ID').agg(sum('REVENUE').alias('weekly_gross_revenue'))
+    print(df_weekly_revenue.show())
 
-    # #df_res.show()
-    # #df_filtered.show(300)
+    window_spec = Window.orderBy(col("crawled_date")).partitionBy("id")
+    df_week = movie_revenue.groupBy("id").agg(max("crawled_date").alias("max_date"))
+    df_week = df_week.withColumn(
+        "min_date", 
+        when(df_week.max_date - expr("INTERVAL 6 DAYS") >= min_crawled_date, df_week.max_date - expr("INTERVAL 6 DAYS"))
+        .otherwise(min_crawled_date))
+    df_week = df_week.withColumnRenamed("id", "week_id").withColumnRenamed("max_date", "week_max_date")
+    movie_revenue = movie_revenue.withColumnRenamed("ID", "revenue_id").withColumnRenamed("CRAWLED_DATE", "revenue_crawled_date")
 
-    # # Define window function
-    # window_spec = Window.orderBy(col("crawled_date")).partitionBy("id")
+    # Join with qualified column names
+   
 
-    # # Get max crawled date for each movie
-    # df_max_date = df_revenue.groupBy("id").agg(max("crawled_date").alias("max_date"))
-    # df_max_date = df_max_date.withColumnRenamed("id","movie_id")
+    print(df_week.show(100))
 
-    # # Get previous date from max date
-    # df_with_max_date = df_revenue.withColumn("max_crawled_date", max("crawled_date").over(window_spec))
-    # df_prev_date = df_with_max_date.withColumn("previous_date", lag("max_crawled_date").over(window_spec))\
-    #                                .withColumn("prev_rank", lag("rank").over(window_spec))
+    df_max_date = df_week.join(movie_revenue, (df_week.week_max_date == movie_revenue.revenue_crawled_date) & (df_week.week_id == movie_revenue.revenue_id)).drop(df_week.min_date).drop(movie_revenue.revenue_id)
+    df_min_date = df_week.join(movie_revenue, (df_week.min_date == movie_revenue.revenue_crawled_date) & (df_week.week_id == movie_revenue.revenue_id)).drop(df_week.week_max_date).drop(movie_revenue.revenue_id)
+    df_min_date = df_min_date.withColumnRenamed("RANK", "rank_min_date")
+    print(df_max_date.show())
+    print(df_min_date.show())
+    df_rank = df_max_date.join(df_min_date, df_min_date.week_id==df_max_date.week_id).withColumn("rank_change", df_min_date.rank_min_date-df_max_date.RANK).drop(df_min_date.week_id)
+    df_rank_change = df_rank.select("week_id", "week_max_date","min_date", "RANK","rank_min_date", "rank_change")
+    print(df_rank_change.show(50))
+    print(df_rank_change.count())
+    df = df.join(df_rank_change, df.ID==df_rank_change.week_id).join(df_weekly_revenue, df.ID ==df_weekly_revenue.ID)
+    print(df.show(50))
+    print(df.count())
 
-    # # Join dataframe for calc rank change
-    # df_result = df_prev_date.join(df_max_date).where((df_prev_date.crawled_date==df_max_date.max_date) & (df_prev_date['id']==df_max_date['movie_id']))
-    # # Get rank change for each movie
-    # rank_change = df_result.withColumn("rank_change",df_result.prev_rank-df_result.rank)
-    # rank_change = rank_change.withColumn("rank_change", coalesce("rank_change", lit(0)))
-
-    # #rank_change.show()
-
-    # # Weekly movie revenue report
-    # analysis = df_res.join(rank_change, df_res.id==rank_change.id).select(df_res["*"], rank_change["rank_change"])
-
-    # analysis = analysis.withColumn("year", lit(year_created))\
-    #                     .withColumn("month", lit(month_created))\
-    #                     .withColumn("day", lit(day_created))
-    
-    # analysis.show(50)
-    # logger.info("Genarated analysis report")
-
-    # # Write to data warehouse
-    # analysis.write.format("hive").mode("append").partitionBy("year", "month", "day").saveAsTable("reports.movies")
-    #logger.info("Write to data warehouse completed.")
 except Exception as exp:
     print("Error occur in method transfromation. Please check the Stack Trace, ", str(exp))
     raise
