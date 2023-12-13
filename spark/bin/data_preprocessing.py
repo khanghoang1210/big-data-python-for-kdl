@@ -1,4 +1,4 @@
-from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull
+from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull,lower,trim
 from pyspark.sql.types import FloatType
 from dotenv import load_dotenv
 import os
@@ -67,6 +67,7 @@ def data_preprocess_and_write_to_silver(spark, snowflake_database, snowflake_sch
 
         # Process 'GENRE' column
         df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
+        df = df.withColumn('GENRE', lower(trim(regexp_replace('GENRE', r'\s*and\s*', ','))))
 
     print(df.show())
     print(df.printSchema())

@@ -1,13 +1,36 @@
 from pyspark.sql import SparkSession
 import logging
 import logging.config
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+
 
 # Load the Logging Configuration File
 logging.config.fileConfig(fname='./spark/utils/logging_to_file.conf')
 logger = logging.getLogger(__name__)
 
+# Declare private variables
+sfURL = os.getenv("sfURL")
+sfAccount = os.getenv("sfAccount")
+sfUser = os.getenv("sfUser")
+sfPassword = os.getenv("sfPassword")
+db_user = os.getenv("db_user")
+db_password = os.getenv("db_password")
+
 SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
-def create_snowflake_table(spark,sfOptions, df_name):
+def create_snowflake_table(spark, snowflake_database, snowflake_schema, df_name):
+    sfOptions = {
+    "sfURL": sfURL,
+    "sfAccount": sfAccount,
+    "sfUser": sfUser,
+    "sfPassword": sfPassword,
+    "sfDatabase": snowflake_database,
+    "sfSchema": snowflake_schema,
+    "sfWarehouse": "COMPUTE_WH",
+    "sfRole": "ACCOUNTADMIN"
+}
     try:
         logger.info("Creating table in snowflake!")
          # create table in snowflake
@@ -44,7 +67,17 @@ def create_snowflake_table(spark,sfOptions, df_name):
     else:
         logger.info("Create table in snowflake - create_snowflake_table() is completed.")
 
-def read_data_from_postgre(spark, table_name, db_user, db_password, sfOptions):
+def read_data_from_postgre(spark, table_name, db_user, db_password, snowflake_database,snowflake_schema):
+    sfOptions = {
+    "sfURL": sfURL,
+    "sfAccount": sfAccount,
+    "sfUser": sfUser,
+    "sfPassword": sfPassword,
+    "sfDatabase": snowflake_database,
+    "sfSchema": snowflake_schema,
+    "sfWarehouse": "COMPUTE_WH",
+    "sfRole": "ACCOUNTADMIN"
+    }
     try:
                
         
@@ -76,7 +109,8 @@ def read_data_from_postgre(spark, table_name, db_user, db_password, sfOptions):
                     .load()
       
     except Exception as exp:
-        logger.error("Error in the method - read_data_from_postgres(). Please check the Stack Trace. " + str(exp),exc_info=True)  
+        logger.error("Error in the method - read_data_from_postgres(). Please check the Stack Trace. " + 
+        str(exp),exc_info=True)  
     
     else:
         logger.info("Read data from postgreSQL - read_data_from_postgre() is completed.")
@@ -84,7 +118,17 @@ def read_data_from_postgre(spark, table_name, db_user, db_password, sfOptions):
 
 
 
-def ingest_data(spark, sfOptions, df, df_name):
+def ingest_data(spark, snowflake_database, snowflake_schema, df, df_name):
+    sfOptions = {
+    "sfURL": sfURL,
+    "sfAccount": sfAccount,
+    "sfUser": sfUser,
+    "sfPassword": sfPassword,
+    "sfDatabase": snowflake_database,
+    "sfSchema": snowflake_schema,
+    "sfWarehouse": "COMPUTE_WH",
+    "sfRole": "ACCOUNTADMIN"
+    }
     try:
         logger.info("Ingestion - ingest_data() is started ...")
         logger.info("Writting data to Snowflake table is started...")

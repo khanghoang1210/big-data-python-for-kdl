@@ -46,8 +46,8 @@ try:
         .getOrCreate()
     logging.info("Spark object is created.")
 
-    create_snowflake_table(spark,"DATA_LAKE", "BRONZE", "movie_revenue")
-    create_snowflake_table(spark, "DATA_LAKE", "BRONZE", "movies_detail")
+    create_snowflake_table(spark,"DATA_LAKE", "SILVER", "movie_revenue")
+    create_snowflake_table(spark, "DATA_LAKE", "SILVER", "movies_detail")
     # Reading data 
     movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password, "DATA_LAKE", "BRONZE")
   
