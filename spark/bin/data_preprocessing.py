@@ -67,13 +67,17 @@ def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
             df = df.withColumn('WORLDWIDE_GROSS', convert_to_number('WORLDWIDE_GROSS'))
             # Remove rows containing specific string in any column
             condition = " or ".join([f"contains({col}, 'Its Me, Margaret.')" for col in df.columns])
-            df = df.filter(f"not ({condition})")
+            df = df.filter(f"not ({condition})") 
 
             # Remove rows with excessive missing data
             df = df.dropna(thresh=len(df.columns) - 2)
 
             # Process 'GENRE' column
             df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
+            df = df.withColumn('GENRE', regexp_replace('GENRE', ' and ', ','))
+
+
+
 
     except Exception as exp:
         logger.error("Error in the method - data_preprocess(). Please check the Stack Trace. " + str(exp),exc_info=True)  
