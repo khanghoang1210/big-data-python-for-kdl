@@ -3,11 +3,7 @@ from dotenv import load_dotenv
 import os
 from ingestion import read_data_from_postgre, ingest_data, create_snowflake_table
 from validations import df_count, df_print_schema ,df_top10_rec
-<<<<<<< HEAD
-from data_preprocessing import data_preprocess_and_write_to_silver
-=======
 from data_preprocessing import data_preprocess, write_data_to_silver_zone
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
 
 import logging
 import logging.config
@@ -50,22 +46,12 @@ try:
         .getOrCreate()
     logging.info("Spark object is created.")
 
-<<<<<<< HEAD
-    create_snowflake_table(spark,"DATA_LAKE", "SILVER", "movie_revenue")
-    create_snowflake_table(spark, "DATA_LAKE", "SILVER", "movies_detail")
-    # Reading data 
-    movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password, "DATA_LAKE", "BRONZE")
-  
-    movies_detail = read_data_from_postgre(spark, "movies_detail", db_user, db_password, "DATA_LAKE", "BRONZE")
-
-=======
     #create table in bronze zone
     create_snowflake_table(spark,"DATA_LAKE", "BRONZE", "movie_revenue")
     create_snowflake_table(spark, "DATA_LAKE", "BRONZE", "movies_detail")
     # Reading data 
     movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password, "DATA_LAKE", "BRONZE")
     movies_detail = read_data_from_postgre(spark, "movies_detail", db_user, db_password, "DATA_LAKE", "BRONZE")
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
 
     # Validate data
     df_top10_rec(movie_revenue, "movie_revenue")
@@ -81,12 +67,6 @@ try:
     # write movies_detail data frame into data lake
     ingest_data(spark,"DATA_LAKE", "BRONZE", movies_detail, "movies_detail")
 
-<<<<<<< HEAD
-    # preprocessing data
-    data_preprocess_and_write_to_silver(spark, "DATA_LAKE","SILVER", "movie_revenue")
-    data_preprocess_and_write_to_silver(spark, "DATA_LAKE","SILVER", "movies_detail")
-    #process_movie_df(movies_detail)
-=======
     # create table in silver zone
     # create_snowflake_table(spark,"DATA_LAKE", "SILVER", "movie_revenue")
     # create_snowflake_table(spark, "DATA_LAKE", "SILVER", "movies_detail")
@@ -99,7 +79,6 @@ try:
     # write data into silver zone
     write_data_to_silver_zone(spark, "DATA_LAKE", "SILVER",movie_revenue_clean, "movie_revenue")
     write_data_to_silver_zone(spark, "DATA_LAKE", "SILVER",movies_detail_clean, "movies_detail")
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
 
     logging.info("main() is Compeleted.")
 except Exception as exp:

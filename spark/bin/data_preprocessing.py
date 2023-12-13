@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull,lower,trim
-from pyspark.sql.types import FloatType
-from dotenv import load_dotenv
-import os
-load_dotenv()
-
-=======
 from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull
 from pyspark.sql.types import FloatType, DoubleType
 from dotenv import load_dotenv
@@ -17,7 +9,6 @@ load_dotenv()
 logging.config.fileConfig(fname='./spark/utils/logging_to_file.conf')
 logger = logging.getLogger(__name__)
 
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
 # Declare private variables
 sfURL = os.getenv("sfURL")
 sfAccount = os.getenv("sfAccount")
@@ -35,11 +26,7 @@ def convert_to_number(column):
 
 SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
 # Function to read data from Snowflake
-<<<<<<< HEAD
-def data_preprocess_and_write_to_silver(spark, snowflake_database, snowflake_schema, table_name):
-=======
 def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
     sfOptions = {
     "sfURL": sfURL,
     "sfAccount": sfAccount,
@@ -49,15 +36,7 @@ def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
     "sfSchema": snowflake_schema,
     "sfWarehouse": "COMPUTE_WH",
     "sfRole": "ACCOUNTADMIN"
-<<<<<<< HEAD
-}
-    df = spark.read \
-        .format(SNOWFLAKE_SOURCE_NAME) \
-        .options(**sfOptions) \
-        .option("dbtable", table_name) \
-        .load()
-=======
-    }
+    } 
     try:
         logger.info("Preprocessing data - data_preprocess() is started ...")
         df = spark.read \
@@ -65,7 +44,6 @@ def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
             .options(**sfOptions) \
             .option("dbtable", table_name) \
             .load()
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
 
     # Function to process general data
         if table_name == "movie_revenue":
@@ -97,20 +75,6 @@ def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
             # Process 'GENRE' column
             df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
 
-<<<<<<< HEAD
-        # Process 'GENRE' column
-        df = df.withColumn('GENRE', expr("regexp_replace(GENRE, 'Its Me, Margaret.?', '')"))
-        df = df.withColumn('GENRE', lower(trim(regexp_replace('GENRE', r'\s*and\s*', ','))))
-
-    print(df.show())
-    print(df.printSchema())
-    df.write\
-            .format(SNOWFLAKE_SOURCE_NAME)\
-            .options(**sfOptions)\
-            .option("dbtable", table_name)\
-            .mode("append")\
-            .save()
-=======
     except Exception as exp:
         logger.error("Error in the method - data_preprocess(). Please check the Stack Trace. " + str(exp),exc_info=True)  
     
@@ -148,4 +112,3 @@ def write_data_to_silver_zone(spark, snowflake_database, snowflake_schema, df, t
     
     else:
         logger.info(f"Dataframe {table_name} is in silver zone - write_data_to_silver_zone() is completed.")
->>>>>>> 743e4602c56d43d7ef5173e28fb8b722042f84d6
