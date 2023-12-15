@@ -52,6 +52,7 @@ rank_col = 'RANK_CHANGE_PER_WEEK'
 gross_col = 'GROSS_CHANGE_PER_WEEK'
 rating_col = 'RATING'
 revenue_col = 'WEEKLY_REVENUE'
+category_col = ''
 
 conn = snowflake.connector.connect(
     user= user,
