@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from ingestion import read_data_from_postgre, ingest_data, create_snowflake_table
 from validations import df_count, df_print_schema ,df_top10_rec
-from data_preprocessing import data_preprocess
+from data_preprocessing import data_preprocess_and_write_to_silver
 
 import logging
 import logging.config
@@ -46,18 +46,16 @@ try:
         .getOrCreate()
     logging.info("Spark object is created.")
 
+    #create table in bronze zone
     create_snowflake_table(spark,"DATA_LAKE", "BRONZE", "movie_revenue")
     create_snowflake_table(spark, "DATA_LAKE", "BRONZE", "movies_detail")
     # Reading data 
     movie_revenue = read_data_from_postgre(spark, "movie_revenue", db_user, db_password, "DATA_LAKE", "BRONZE")
-  
     movies_detail = read_data_from_postgre(spark, "movies_detail", db_user, db_password, "DATA_LAKE", "BRONZE")
-
 
     # Validate data
     df_top10_rec(movie_revenue, "movie_revenue")
     df_count(movie_revenue, "movie_revenue")
-    
 
     df_top10_rec(movies_detail, "movies_detail")
     df_count(movies_detail, "movies_detail")
@@ -70,9 +68,21 @@ try:
     ingest_data(spark,"DATA_LAKE", "BRONZE", movies_detail, "movies_detail")
 
     # preprocessing data
-    data_preprocess_and_write_to_silver(spark, "DATA_LAKE","SILVER", "movie_revenue")
-    data_preprocess_and_write_to_silver(spark, "DATA_LAKE","SILVER", "movies_detail")
-    #process_movie_df(movies_detail)
+    movie_revenue_clean = data_preprocess(spark, "DATA_LAKE", "BRONZE", "movie_revenue")
+    movies_detail_clean = data_preprocess(spark, "DATA_LAKE", "BRONZE", "movies_detail")
+    df_print_schema(movie_revenue_clean, "revenue")
+    df_print_schema(movies_detail_clean, "movie")
+    # write data into silver zone
+    write_data_to_silver_zone(spark, "DATA_LAKE", "SILVER",movie_revenue_clean, "movie_revenue")
+    write_data_to_silver_zone(spark, "DATA_LAKE", "SILVER",movies_detail_clean, "movies_detail")
+
+    # transform data
+    weekly_movie_report = transform(spark)
+    df_top10_rec(weekly_movie_report, "weekly_movie_report")
+    df_count(weekly_movie_report, "weekly_movie_report")
+
+    # load data into golden zone/complete pipeline
+    load(spark,weekly_movie_report,"weekly_movie_report")
 
     logging.info("main() is Compeleted.")
 except Exception as exp:

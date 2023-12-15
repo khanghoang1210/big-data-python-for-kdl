@@ -91,6 +91,7 @@ def read_data_from_postgre(spark, table_name, db_user, db_password, snowflake_da
         record_count = snowflake_df.count()
         print(record_count)
         
+        #handling change data capture
         if record_count == 0 or table_name == "movies_detail":
             query = f"(SELECT * FROM {table_name}) AS tmp"
 
