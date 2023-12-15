@@ -60,12 +60,12 @@ conn = snowflake.connector.connect(
     account=account,
     warehouse="COMPUTE_WH",
     database="DATA_LAKE",
-    schema="PUBLIC_TEST_HH",
+    schema="GOLD",
     role="ACCOUNTADMIN",
 )
 
 cur = conn.cursor()
-sql = "select * from data_lake.public_test_hh.analyst"
+sql = "select * from data_lake.GOLD.analyst"
 cur.execute(sql)
 data = cur.fetch_pandas_all()
 data_frame = pd.DataFrame(data)
