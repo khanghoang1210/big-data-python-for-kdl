@@ -56,7 +56,6 @@ def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
 
             # Xóa tất cả các dòng có ít nhất một giá trị null
             df = df.dropna()
-            print(df.printSchema())
 
         if table_name == "movies_detail":
             # Process 'RATING' column
@@ -95,11 +94,7 @@ def write_data_to_silver_zone(spark, snowflake_database, snowflake_schema, df, t
     }
     try:    
         logger.info("Writting data into silver zone - write_data_to_silver_zone() is started...")
-        save_mode = ""
-        if table_name == "movies_detail":
-            save_mode = 'overwrite'
-        elif table_name == "movie_revenue":
-            save_mode = 'overwrite'
+        save_mode = "overwrite"
         df.write\
                 .format(SNOWFLAKE_SOURCE_NAME)\
                 .options(**sfOptions)\
