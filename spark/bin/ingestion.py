@@ -38,9 +38,9 @@ def create_snowflake_table(spark, snowflake_database, snowflake_schema, df_name)
             create_table = f""" CREATE TABLE IF NOT EXISTS movie_revenue (
                         id varchar,
                         rank integer,
-                        revenue float,
-                        gross_change_per_day float,
-                        gross_change_per_week float,
+                        revenue varchar,
+                        gross_change_per_day varchar,
+                        gross_change_per_week varchar,
                         crawled_date date,
                         primary key(crawled_date, id)
                     )
