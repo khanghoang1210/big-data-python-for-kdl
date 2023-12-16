@@ -14,8 +14,8 @@ title_col = "TITLE"
 week_col = "WEEK"
 rank_col = "RANK_CHANGE"
 rating_col = "RATING"
-gross_col = "GROSS_CHANGE_PER_WEEK"
 revenue_col = "WEEKLY_GROSS_REVENUE"
+gross_col = "GROSS_CHANGE_PER_WEEK"
 
 conn = snowflake.connector.connect(
     user="khanghoang12",
@@ -50,7 +50,7 @@ st.sidebar.header("IMDB Dashboard")
 
 st.sidebar.subheader("")
 period = st.sidebar.selectbox("Time by", ("week", "month"))
-sort_value = str(st.sidebar.selectbox("Sort ascending", ("None", "True", "False")))
+# sort_value = str(st.sidebar.selectbox("Sort ascending", ("None", "True", "False")))
 top = st.sidebar.selectbox("Top ", ("highest", "lowest"))
 num_show = st.sidebar.selectbox(
     "Show top ", ("10", "9", "8", "7", "6", "5", "4", "3", "2", "1")
@@ -65,6 +65,10 @@ Data taken by [{}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
         team_name, designer_name
     )
 )
+
+# taking data by period
+def fill_data_by_period(df):
+    pass
 
 
 def show_1_top(df, col, type):
@@ -99,6 +103,7 @@ def show_n_top(df, num, col, type):
     st.write(output_list)
 
 
+# Need uprade this function, search 'like' not 'exact' 
 def search_function(df, text, col):
     is_result_found = False
     result = ""
@@ -122,94 +127,64 @@ def search_function(df, text, col):
         st.write("No Result Found !")
 
 
-def draw_rating_barchart(df):
-    # plost.bar_chart(
-    #     data= df,
-    #     bar= 'TITLE',
-    #     value= 'RATING',
-    #     color= 'maroon',
-    #     width= 800,
-    #     use_container_width= True
-    # )
-    st.bar_chart(df[rating_col])
-
-
 def main():
     st.header("🎥 IMDB DASHBOARD 🎞️")
 
-    # ROW 1
+    # DIV 1 -- list top div
     st.markdown("### Top {} value".format(top))
-    col_1, col_2, col_3, col_4 = st.columns(4)
 
-
+    col_1, col_1_blank = st.columns((9.5, 0.5))
     top_name, top_value = show_1_top(data_frame, rating_col, top)
-    col_1.metric("Top rating", top_name, top_value)
+    col_1.metric("----- Top rating", top_name, top_value)
 
+    col_2, col_2_blank = st.columns((9.5, 0.5))
     top_name, top_value = show_1_top(data_frame, revenue_col, top)
-    col_2.metric("Top revenue", top_name, top_value)
-    
-    top_name, top_value = show_1_top(data_frame, rank_col, top)
-    col_3.metric("Top rank change", top_name, top_value)
-    
-    top_name, top_value = show_1_top(data_frame, gross_col, top)
-    col_4.metric("Top gross change", top_name, top_value)
+    col_2.metric("----- Top revenue", top_name, top_value)
 
-    # ROW 2
+    col_3, col_3_blank = st.columns((9.5, 0.5))
+    top_name, top_value = show_1_top(data_frame, rank_col, top)
+    col_3.metric("----- Top rank change", top_name, top_value)
+    
+    col_4, col_4_blank = st.columns((9.5, 0.5))
+    top_name, top_value = show_1_top(data_frame, gross_col, top)
+    col_4.metric("----- Top gross change", top_name, top_value)
+
+    # DIV 2
     c1, c2 = st.columns((6.5, 3.5))
     with c1:
         st.markdown("### Rating chart")
-
-        if sort_value == "True":
-            sorted_dataframe = data_frame.sort_values(by=rating_col, ascending=True)
-            draw_rating_barchart(sorted_dataframe)
-
-        elif sort_value == "False":
-            sorted_dataframe = data_frame.sort_values(by=rating_col, ascending=False)
-            draw_rating_barchart(sorted_dataframe)
-
-        else:
-            draw_rating_barchart(data_frame)
+        st.bar_chart(data_frame[rating_col])
 
     with c2:
         st.markdown("### Top 5 {}".format(top))
         show_n_top(data_frame, num_show, rating_col, top)
 
-    # ROW 3
+    # DIV 3
     c1, c2 = st.columns((6.5, 3.5))
     with c1:
         st.markdown("### Revenue chart")
-        plost.bar_chart(
-            data=data_frame.sort_values(by=revenue_col, ascending=False),
-            bar=title_col,
-            value=revenue_col,
-            color="blue",
-            width=600,
-            use_container_width=True,
-        )
-        # st.bar_chart(data_frame[revenue_col])
+        # plost.bar_chart(
+        #     data=data_frame.sort_values(by=revenue_col, ascending=False),
+        #     bar=title_col,
+        #     value=revenue_col,
+        #     color="blue",
+        #     width=600,
+        #     use_container_width=True,
+        # )
+        st.bar_chart(data_frame[revenue_col])
     with c2:
         st.markdown("### Top 5 {}".format(top))
         show_n_top(data_frame, num_show, revenue_col, top)
 
-    # ROW 4
-    # st.markdown('### Rank change chart')
-    # plost.bar_chart(
-    #     data= data_frame,
-    #     bar='name',
-    #     value= 'rank_change',
-    #     color= 'green',
-    #     use_container_width= True
-    # )
+    # DIV 4
+    st.markdown('### Rank change chart')
+    st.bar_chart(data_frame[rank_col])
 
-    # ROW 5
-    # st.markdown('### Gross change chart')
-    # st.bar_chart(data_frame['gross_change'])
+    # DIV 5
+    st.markdown('### Gross change chart')
+    st.bar_chart(data_frame[gross_col])
 
-    # Final ROW Rank change ans Gross change chart
-    st.markdown("### Rank change - Gross change chart")
-    plost.bar_chart(data=data_frame, bar=title_col, width=1000, value=[rank_col])
-
-    # ROW 6
+    # DIV 6
     col, search_text = st.columns((3, 7))
     with col:
         col_name = st.selectbox("Column name:", ("TITLE", "ID"))
@@ -217,13 +192,6 @@ def main():
         search_text_value = st.text_input("Search box: ")
 
     search_function(data_frame, search_text_value, str(col_name))
-    # result = search_function(data_frame, search_text_value, str(col_name).lower())
-
-    # if result is not None:
-    #     st.write(result)
-    # else:
-    #     st.write("No results found")
-
     st.write(data_frame)
 
 

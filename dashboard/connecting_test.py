@@ -21,4 +21,8 @@ cur.execute(sql)
 data = cur.fetch_pandas_all()
 data_frame = pd.DataFrame(data)
 
+# fill data by week
+
+proccessed_df = data_frame[data_frame['WEEK'] == 1]
 print(data_frame)
+print(proccessed_df)
