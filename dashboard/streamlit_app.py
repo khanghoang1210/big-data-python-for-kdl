@@ -2,12 +2,12 @@ import snowflake.connector
 import streamlit as st
 import pandas as pd
 import plost
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-with open("user_account.txt", "r") as file:
-    account, user, password = file.readlines()
-    account = account.rstrip()
-    user = user.rstrip()
+# with open("user_account.txt", "r") as file:
+#     account, user, password = file.readlines()
+#     account = account.rstrip()
+#     user = user.rstrip()
 
 id_col = "ID"
 title_col = "TITLE"
