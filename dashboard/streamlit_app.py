@@ -93,15 +93,23 @@ def fill_data_by_period(df):
 
 
 def show_1_top(df, col, type):
+    
     if type == "highest":
         sorted_df = df.sort_values(by=col, ascending=False)
     else:
         sorted_df = df.sort_values(by=col, ascending=True)
 
-    name = sorted_df[title_col].iloc[0]
-    value = sorted_df[col].iloc[0]
+    if col == rating_col:
+        for i in range(len(data_frame)):
+            name = sorted_df[title_col].iloc[i]
+            value = sorted_df[col].iloc[i]
+            if 0 <= value <= 10:
+                break
+    else:
+        name = sorted_df[title_col].iloc[0]
+        value = sorted_df[col].iloc[0]
 
-    if str(col) == rank_col or str(col) == gross_col:
+    if str(col) == gross_col:
         return name, str(value) + "%"
 
     return name, str(value)
@@ -116,9 +124,14 @@ def show_n_top(df, num, col, type):
 
     output_list = ""
     for i in range(num):
-        output_list += "{0}. {1} - {2}: {3}\n".format(
-            i + 1, sorted_df[title_col].iloc[i], col, sorted_df[col].iloc[i]
-        )
+        if col != rating_col:
+            output_list += "{0}. {1} - {2}: {3}\n".format(
+                i + 1, sorted_df[title_col].iloc[i], col, sorted_df[col].iloc[i]
+            )
+        else:
+            output_list += "{0}. {1}\n".format(
+                i + 1, sorted_df[title_col].iloc[i],
+            )
 
     st.write("Top {} {}: ".format(num, type))
     st.write(output_list)
@@ -126,19 +139,20 @@ def show_n_top(df, num, col, type):
 
 # Need uprade this function, search 'like' not 'exact'
 def search_function(text, col):
+    sub_cur = conn.cursor()
+    sub_sql = "select * from data_lake.SILVER.MOVIES_DETAIL"
+    sub_cur.execute(sub_sql)
+    sub_data = sub_cur.fetch_pandas_all()
+    sub_df = pd.DataFrame(sub_data)
+
     if text == "":
-        return data_frame
+        return sub_df
     elif col == "GENRE":
-        sub_cur = conn.cursor()
-        sub_sql = "select * from data_lake.SILVER.MOVIES_DETAIL"
-        sub_cur.execute(sub_sql)
-        sub_data = sub_cur.fetch_pandas_all()
-        sub_df = pd.DataFrame(sub_data)
-
         return sub_df[sub_df["GENRE"].str.contains(text, case=False, na=False)]
+    elif col == "TITLE":
+        return sub_df[sub_df[col].str.contains(text, case=False, na=False)]
     else:
-        return data_frame[data_frame[col] == text]
-
+        return sub_df[sub_df[col] == text]
 
 def main():
     st.header("🎥 WEEKLY MOVIE IMDB DASHBOARD 🎞️")
@@ -169,7 +183,7 @@ def main():
         st.bar_chart(data_frame[rating_col])
 
     with c2:
-        st.markdown("### Top 5 {}".format(top))
+        st.markdown(f"### Top {num_show} {top}")
         show_n_top(data_frame, num_show, rating_col, top)
 
     # DIV 3
@@ -186,7 +200,7 @@ def main():
         # )
         st.bar_chart(data_frame[revenue_col])
     with c2:
-        st.markdown("### Top 5 {}".format(top))
+        st.markdown(f"### Top {num_show} {top}")
         show_n_top(data_frame, num_show, revenue_col, top)
 
     # DIV 4
