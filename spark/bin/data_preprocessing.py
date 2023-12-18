@@ -1,5 +1,5 @@
 from pyspark.sql.functions import regexp_replace, col, when,expr,regexp_extract,isnull
-from pyspark.sql.types import FloatType
+from pyspark.sql.types import FloatType, DoubleType
 from dotenv import load_dotenv
 import logging
 import os
@@ -48,11 +48,11 @@ def data_preprocess(spark, snowflake_database, snowflake_schema, table_name):
     # Function to process general data
         if table_name == "movie_revenue":
             # Process 'REVENUE' column
-            df = df.withColumn('REVENUE', when(isnull('REVENUE'), 0).otherwise(regexp_replace('REVENUE', ',', '').cast(FloatType())))
+            df = df.withColumn('REVENUE', when(isnull('REVENUE'), 0).otherwise(regexp_replace('REVENUE', ',', '').cast(DoubleType())))
             df = df.withColumn('GROSS_CHANGE_PER_DAY', when(col('GROSS_CHANGE_PER_DAY') == '-', 0)\
-                            .otherwise(when(isnull('GROSS_CHANGE_PER_DAY'), 0).otherwise(regexp_replace('GROSS_CHANGE_PER_DAY', '%', '').cast(FloatType()))))
+                            .otherwise(when(isnull('GROSS_CHANGE_PER_DAY'), 0).otherwise(regexp_replace('GROSS_CHANGE_PER_DAY', '%', '').cast(DoubleType()))))
             df = df.withColumn('GROSS_CHANGE_PER_WEEK', when(col('GROSS_CHANGE_PER_WEEK') == '-', 0)\
-                            .otherwise(when(isnull('GROSS_CHANGE_PER_WEEK'), 0).otherwise(regexp_replace('GROSS_CHANGE_PER_WEEK', '%', '').cast(FloatType()))))
+                            .otherwise(when(isnull('GROSS_CHANGE_PER_WEEK'), 0).otherwise(regexp_replace('GROSS_CHANGE_PER_WEEK', '%', '').cast(DoubleType()))))
 
             # Xóa tất cả các dòng có ít nhất một giá trị null
             df = df.dropna()
@@ -94,11 +94,7 @@ def write_data_to_silver_zone(spark, snowflake_database, snowflake_schema, df, t
     }
     try:    
         logger.info("Writting data into silver zone - write_data_to_silver_zone() is started...")
-        save_mode = ""
-        if table_name == "movies_detail":
-            save_mode = 'overwrite'
-        elif table_name == "movie_revenue":
-            save_mode = 'append'
+        save_mode = "overwrite"
         df.write\
                 .format(SNOWFLAKE_SOURCE_NAME)\
                 .options(**sfOptions)\
