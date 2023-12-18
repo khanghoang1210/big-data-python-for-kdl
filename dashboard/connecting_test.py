@@ -23,6 +23,15 @@ data_frame = pd.DataFrame(data)
 
 # fill data by week
 
+week_list = []
+
+for i in range(len(data_frame['WEEK'])):
+    if data_frame['WEEK'].iloc[i] not in week_list:
+        week_list.append(data_frame['WEEK'].iloc[i])
+
+        print(data_frame['WEEK'].iloc[i])
+
+# print(week_list)
 proccessed_df = data_frame[data_frame['WEEK'] == 1]
-print(data_frame)
-print(proccessed_df)
+# print(data_frame)
+# print(proccessed_df)
