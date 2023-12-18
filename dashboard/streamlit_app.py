@@ -35,10 +35,6 @@ data = cur.fetch_pandas_all()
 data_frame = pd.DataFrame(data)
 
 
-def month_list_detection():
-    pass
-
-
 def week_list_detection():
     week_list = []
 
@@ -50,13 +46,13 @@ def week_list_detection():
 
 
 def period_detection():
-    period_list = []
-    if period == "week":
-        period_list = week_list_detection()
-    else:
-        period_list = month_list_detection()
+    week_list = []
 
-    return tuple(period_list)
+    for i in range(len(data_frame["WEEK"])):
+        if data_frame["WEEK"].iloc[i] not in week_list:
+            week_list.append(data_frame["WEEK"].iloc[i])
+
+    return tuple(week_list)
 
 
 team_name = "team_name"
@@ -75,10 +71,9 @@ with open("style.css") as file:
 st.sidebar.header("IMDB Dashboard")
 
 st.sidebar.subheader("")
-period = st.sidebar.selectbox("Time by", ("week", "month"))
 detected_period = period_detection()
-choosen_period = st.sidebar.selectbox(f"Choose {period}", detected_period)
-data_frame = data_frame[data_frame['WEEK'] == choosen_period]
+choosen_period = st.sidebar.selectbox("Time by week", detected_period)
+data_frame = data_frame[data_frame["WEEK"] == choosen_period]
 top = st.sidebar.selectbox("Top ", ("highest", "lowest"))
 num_show = st.sidebar.selectbox(
     "Show top ", ("10", "9", "8", "7", "6", "5", "4", "3", "2", "1")
