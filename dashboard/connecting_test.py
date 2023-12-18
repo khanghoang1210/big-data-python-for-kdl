@@ -15,23 +15,10 @@ conn = snowflake.connector.connect(
     role= "ACCOUNTADMIN",
 )
 
-cur = conn.cursor()
-sql = "select * from data_lake.GOLD.WEEKLY_MOVIE_REPORT"
-cur.execute(sql)
-data = cur.fetch_pandas_all()
-data_frame = pd.DataFrame(data)
+sub_cur = conn.cursor()
+sub_sql = 'select * from data_lake.SILVER.MOVIES_DETAIL'
+sub_cur.execute(sub_sql)
+sub_data = sub_cur.fetch_pandas_all()
+sub_df = pd.DataFrame(sub_data)
 
-# fill data by week
-
-week_list = []
-
-for i in range(len(data_frame['WEEK'])):
-    if data_frame['WEEK'].iloc[i] not in week_list:
-        week_list.append(data_frame['WEEK'].iloc[i])
-
-        print(data_frame['WEEK'].iloc[i])
-
-# print(week_list)
-proccessed_df = data_frame[data_frame['WEEK'] == 1]
-# print(data_frame)
-# print(proccessed_df)
+print(sub_df)

@@ -46,7 +46,7 @@ def week_list_detection():
 
 
 def period_detection():
-    week_list = []
+    week_list = ["ALL"]
 
     for i in range(len(data_frame["WEEK"])):
         if data_frame["WEEK"].iloc[i] not in week_list:
@@ -54,9 +54,6 @@ def period_detection():
 
     return tuple(week_list)
 
-
-team_name = "team_name"
-designer_name = "JR"
 
 st.set_page_config(
     page_title="IMDB Dashboard",
@@ -68,12 +65,13 @@ st.set_page_config(
 with open("style.css") as file:
     st.markdown(f"<style>{file.read()}</style>", unsafe_allow_html=True)
 
-st.sidebar.header("IMDB Dashboard")
+st.sidebar.header("IMDB DASHBOARD")
 
-st.sidebar.subheader("")
+st.sidebar.subheader("asdasd")
 detected_period = period_detection()
 choosen_period = st.sidebar.selectbox("Time by week", detected_period)
-data_frame = data_frame[data_frame["WEEK"] == choosen_period]
+if choosen_period != "ALL":
+    data_frame = data_frame[data_frame["WEEK"] == choosen_period]
 top = st.sidebar.selectbox("Top ", ("highest", "lowest"))
 num_show = st.sidebar.selectbox(
     "Show top ", ("10", "9", "8", "7", "6", "5", "4", "3", "2", "1")
@@ -82,10 +80,9 @@ num_show = st.sidebar.selectbox(
 st.sidebar.markdown(
     """
 ---
-Data taken by [{}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-\nDesigned by [{}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+By [{}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 """.format(
-        team_name, designer_name
+        "Team"
     )
 )
 
@@ -128,27 +125,19 @@ def show_n_top(df, num, col, type):
 
 
 # Need uprade this function, search 'like' not 'exact'
-def search_function(df, text, col):
-    is_result_found = False
-    result = ""
-    text = str(text).upper()
+def search_function(text, col):
+    if text == "":
+        return data_frame
+    elif col == "GENRE":
+        sub_cur = conn.cursor()
+        sub_sql = "select * from data_lake.SILVER.MOVIES_DETAIL"
+        sub_cur.execute(sub_sql)
+        sub_data = sub_cur.fetch_pandas_all()
+        sub_df = pd.DataFrame(sub_data)
 
-    for i in range(len(df)):
-        process_value = str(df[col].iloc[i]).upper()
-        result = ""
-        if process_value == text:
-            result += "NAME: " + str(df[title_col].iloc[i]) + "\n"
-            result += "RATING: " + str(df[rating_col].iloc[i]) + "\n"
-            result += "REVENUE: " + str(df[revenue_col].iloc[i]) + "\n"
-            result += "RANK CHANGE: " + str(df[rank_col].iloc[i]) + "%" + "\n"
-            result += "GROSS CHANGE: " + str(df[gross_col].iloc[i]) + "%"
-
-            is_result_found = True
-
-            st.write(result)
-
-    if not is_result_found:
-        st.write("No Result Found !")
+        return sub_df[sub_df["GENRE"].str.contains(text, case=False, na=False)]
+    else:
+        return data_frame[data_frame[col] == text]
 
 
 def main():
@@ -211,14 +200,12 @@ def main():
     # DIV 6
     col, search_text = st.columns((3, 7))
     with col:
-        col_name = st.selectbox("Column name:", ("TITLE", "ID"))
+        col_name = st.selectbox("Column name:", ("TITLE", "ID", "RATING", "GENRE"))
     with search_text:
         search_text_value = st.text_input("Search box: ")
 
-    search_function(data_frame, search_text_value, str(col_name))
-    st.write(data_frame)
+    res = search_function(search_text_value.title(), str(col_name))
+    st.write(res)
 
 
 main()
-
-# streamlit run c:\Users\JR\Desktop\PJ\bigdata-for-movie-prediction\dashboard\streamlit_app.py
