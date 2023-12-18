@@ -2,6 +2,7 @@ import snowflake.connector
 import streamlit as st
 import pandas as pd
 import plost
+
 # import matplotlib.pyplot as plt
 
 # with open("user_account.txt", "r") as file:
@@ -33,6 +34,31 @@ cur.execute(sql)
 data = cur.fetch_pandas_all()
 data_frame = pd.DataFrame(data)
 
+
+def month_list_detection():
+    pass
+
+
+def week_list_detection():
+    week_list = []
+
+    for i in range(len(data_frame["WEEK"])):
+        if data_frame["WEEK"].iloc[i] not in week_list:
+            week_list.append(data_frame["WEEK"].iloc[i])
+
+    return week_list
+
+
+def period_detection():
+    period_list = []
+    if period == "week":
+        period_list = week_list_detection()
+    else:
+        period_list = month_list_detection()
+
+    return tuple(period_list)
+
+
 team_name = "team_name"
 designer_name = "JR"
 
@@ -50,7 +76,9 @@ st.sidebar.header("IMDB Dashboard")
 
 st.sidebar.subheader("")
 period = st.sidebar.selectbox("Time by", ("week", "month"))
-# sort_value = str(st.sidebar.selectbox("Sort ascending", ("None", "True", "False")))
+detected_period = period_detection()
+choosen_period = st.sidebar.selectbox(f"Choose {period}", detected_period)
+data_frame = data_frame[data_frame['WEEK'] == choosen_period]
 top = st.sidebar.selectbox("Top ", ("highest", "lowest"))
 num_show = st.sidebar.selectbox(
     "Show top ", ("10", "9", "8", "7", "6", "5", "4", "3", "2", "1")
@@ -65,6 +93,7 @@ Data taken by [{}](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
         team_name, designer_name
     )
 )
+
 
 # taking data by period
 def fill_data_by_period(df):
@@ -103,7 +132,7 @@ def show_n_top(df, num, col, type):
     st.write(output_list)
 
 
-# Need uprade this function, search 'like' not 'exact' 
+# Need uprade this function, search 'like' not 'exact'
 def search_function(df, text, col):
     is_result_found = False
     result = ""
@@ -144,7 +173,7 @@ def main():
     col_3, col_3_blank = st.columns((9.5, 0.5))
     top_name, top_value = show_1_top(data_frame, rank_col, top)
     col_3.metric("----- Top rank change", top_name, top_value)
-    
+
     col_4, col_4_blank = st.columns((9.5, 0.5))
     top_name, top_value = show_1_top(data_frame, gross_col, top)
     col_4.metric("----- Top gross change", top_name, top_value)
@@ -177,11 +206,11 @@ def main():
         show_n_top(data_frame, num_show, revenue_col, top)
 
     # DIV 4
-    st.markdown('### Rank change chart')
+    st.markdown("### Rank change chart")
     st.bar_chart(data_frame[rank_col])
 
     # DIV 5
-    st.markdown('### Gross change chart')
+    st.markdown("### Gross change chart")
     st.bar_chart(data_frame[gross_col])
 
     # DIV 6
