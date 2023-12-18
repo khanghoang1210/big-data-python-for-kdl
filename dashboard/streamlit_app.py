@@ -141,7 +141,7 @@ def search_function(text, col):
 
 
 def main():
-    st.header("🎥 IMDB DASHBOARD 🎞️")
+    st.header("🎥 WEEKLY MOVIE IMDB DASHBOARD 🎞️")
 
     # DIV 1 -- list top div
     st.markdown("### Top {} value".format(top))
